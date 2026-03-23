@@ -1,14 +1,5 @@
+using KapNet;
 using System.Net;
-
-public enum PacketType
-{
-    HandShake,
-    HandShake_OK, 
-    Error,
-    Ping,
-    Pong,
-    Message,
-}
 
 
 public class NetworkPacket

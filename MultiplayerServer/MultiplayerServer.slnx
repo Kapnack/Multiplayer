@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="MultiplayerServer/MultiplayerServer.csproj" Id="1ab134c8-74ef-4df6-8dbd-bb2a07af20a9">
+    <BuildDependency Project="ToolBox/ToolBox.csproj" />
+  </Project>
+  <Project Path="ToolBox/ToolBox.csproj" Id="ca0b2178-0374-410f-a7fe-3643bc8961cd" />
+</Solution>
