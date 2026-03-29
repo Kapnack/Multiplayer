@@ -2,8 +2,9 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    private float friction = 4.0f;
-    private float aceleration = 15.0f;
+    private const float friction = 4.0f;
+    private const float aceleration = 15.0f;
+
     private Vector3 velocity;
 
     void Update()

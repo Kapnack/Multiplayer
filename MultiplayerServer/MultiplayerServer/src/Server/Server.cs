@@ -47,6 +47,50 @@ namespace KapNet
             publicKey = rsa.ToXmlString(false);
         }
 
+        void Update()
+        {
+            const int tickRate = 60;
+            int delay = 1000 / tickRate;
+
+            while (running)
+            {
+                int start = Environment.TickCount;
+
+                connection?.FlushReceiveData();
+                CheckTimeouts();
+
+                int elapsed = Environment.TickCount - start;
+                int sleepTime = delay - elapsed;
+
+                if (Console.KeyAvailable)
+                {
+                    ConsoleKeyInfo key = Console.ReadKey(true);
+
+                    if (key.Key == ConsoleKey.Escape)
+                    {
+                        Console.WriteLine("Shutting down...");
+                        running = false;
+                    }
+                }
+
+                if (sleepTime > 0)
+                    Thread.Sleep(sleepTime);
+            }
+        }
+
+        void Unload()
+        {
+            foreach (IPEndPoint client in new List<IPEndPoint>(clientList))
+            {
+                RemoveClient(client);
+            }
+        }
+
+        public void Dispose()
+        {
+            Unload();
+        }
+
         public void OnReceiveData(byte[] data, IPEndPoint ip)
         {
             PacketType type = PacketBuilder.GetType(data);
@@ -168,37 +212,6 @@ namespace KapNet
             ));
         }
 
-        void Update()
-        {
-            const int tickRate = 60;
-            int delay = 1000 / tickRate;
-
-            while (running)
-            {
-                int start = Environment.TickCount;
-
-                connection?.FlushReceiveData();
-                CheckTimeouts();
-
-                int elapsed = Environment.TickCount - start;
-                int sleepTime = delay - elapsed;
-
-                if (Console.KeyAvailable)
-                {
-                    var key = Console.ReadKey(true);
-
-                    if (key.Key == ConsoleKey.Escape)
-                    {
-                        Console.WriteLine("Shutting down...");
-                        running = false;
-                    }
-                }
-
-                if (sleepTime > 0)
-                    Thread.Sleep(sleepTime);
-            }
-        }
-
         void CheckTimeouts()
         {
             double now = time.RealTimeSinceStartUp;
@@ -215,19 +228,6 @@ namespace KapNet
                 Console.WriteLine("Client timeout: " + ip);
                 RemoveClient(ip);
             }
-        }
-
-        void Unload()
-        {
-            foreach (var client in new List<IPEndPoint>(clientList))
-            {
-                RemoveClient(client);
-            }
-        }
-
-        public void Dispose()
-        {
-            Unload();
         }
     }
 }
