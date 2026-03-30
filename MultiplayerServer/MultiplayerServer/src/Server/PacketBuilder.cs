@@ -17,6 +17,10 @@ namespace KapNet
 
     public static class PacketBuilder
     {
+        private const int PacketTypeOffSet = 0;
+        private const int PacketIDOffSet = 1;
+        private const int PacketDataOffSet = sizeof(uint) + 1;
+
         private static uint packetID = 0;
 
         public static byte[] Create(PacketType type, byte[] payload = null)
@@ -26,16 +30,16 @@ namespace KapNet
             if (payload == null)
                 payload = new byte[0];
 
-            byte[] data = new byte[1 + sizeof(uint) + payload.Length + 2];
+            byte[] data = new byte[1 + sizeof(uint) + payload.Length + sizeof(int) * 2];
 
-            data[0] = Convert.ToByte(type);
+            data[PacketTypeOffSet] = Convert.ToByte(type);
 
-            BitConverter.GetBytes(packetID).CopyTo(data, 1);
+            BitConverter.GetBytes(packetID).CopyTo(data, PacketIDOffSet);
 
-            Buffer.BlockCopy(payload, 0, data, 1, payload.Length);
+            Buffer.BlockCopy(payload, 0, data, PacketDataOffSet, payload.Length);
 
-            data[data.Length - 2] = Convert.ToByte(CalculateCheckSum(data, 0, 2));
-            data[data.Length - 1] = Convert.ToByte(CalculateCheckSum(data, 0, 1));
+            BitConverter.GetBytes(CalculateCheckSum(data, 0, sizeof(int) * 2)).CopyTo(data, data.Length - sizeof(int) * 2);
+            BitConverter.GetBytes(CalculateCheckSum(data, 0, sizeof(int))).CopyTo(data, data.Length - sizeof(int));
 
             return data;
         }
@@ -52,13 +56,31 @@ namespace KapNet
 
         public static PacketType GetType(byte[] data)
         {
-            return (PacketType)data[0];
+            return (PacketType)data[PacketTypeOffSet];
+        }
+
+        public static uint GetID(byte[] data)
+        {
+            return BitConverter.ToUInt32(data, PacketIDOffSet);
+        }
+
+        public static int GetCheckSum1(byte[] data)
+        {
+            return BitConverter.ToInt32(data, data.Length - sizeof(int) * 2);
+        }
+
+        public static int GetCheckSum2(byte[] data)
+        {
+            return BitConverter.ToInt32(data, data.Length - sizeof(int));
         }
 
         public static byte[] GetPayload(byte[] data)
         {
-            byte[] payload = new byte[data.Length - 1];
-            Buffer.BlockCopy(data, 1, payload, 0, payload.Length);
+            int payloadSize = data.Length - (PacketDataOffSet + sizeof(int) * 2);
+            byte[] payload = new byte[payloadSize];
+
+            Buffer.BlockCopy(data, PacketDataOffSet, payload, 0, payloadSize);
+
             return payload;
         }
     }

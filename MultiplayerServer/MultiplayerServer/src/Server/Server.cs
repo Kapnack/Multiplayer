@@ -98,6 +98,12 @@ namespace KapNet
 
             clients[ip] = time.RealTimeSinceStartUp;
 
+            if (PacketBuilder.CalculateCheckSum(data, 0, sizeof(int) * 2) != PacketBuilder.GetCheckSum1(data) ||
+                PacketBuilder.CalculateCheckSum(data, 0, sizeof(int)) != PacketBuilder.GetCheckSum2(data))
+            {
+                return;
+            }
+
             switch (type)
             {
                 case PacketType.Handshake:
@@ -171,7 +177,7 @@ namespace KapNet
 
         void RemoveClient(IPEndPoint ip)
         {
-            if (!clients.ContainsKey(ip)) 
+            if (!clients.ContainsKey(ip))
                 return;
 
             Console.WriteLine("Client removed: " + ip);

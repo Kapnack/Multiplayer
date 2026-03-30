@@ -81,6 +81,10 @@ public class MyClient : MonoBehaviour
     {
         byte[] data = client.EndReceive(result, ref serverEndPoint);
 
+        if (PacketBuilder.CalculateCheckSum(data, 0, sizeof(int) * 2) != PacketBuilder.GetCheckSum1(data) ||
+            PacketBuilder.CalculateCheckSum(data, 0, sizeof(int)) != PacketBuilder.GetCheckSum2(data))
+            return;
+
         PacketType type = PacketBuilder.GetType(data);
         byte[] payload = PacketBuilder.GetPayload(data);
 
