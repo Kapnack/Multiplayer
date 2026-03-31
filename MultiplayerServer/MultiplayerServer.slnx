@@ -1,6 +1,10 @@
 <Solution>
-  <Project Path="MultiplayerServer/MultiplayerServer.csproj" Id="1ab134c8-74ef-4df6-8dbd-bb2a07af20a9">
+  <Project Path="ServerArquitecture/ServerArquitecture.csproj" Id="4975e048-bce9-4ee0-8573-3b73dd684dee">
     <BuildDependency Project="ToolBox/ToolBox.csproj" />
   </Project>
-  <Project Path="ToolBox/ToolBox.csproj" Id="ca0b2178-0374-410f-a7fe-3643bc8961cd" />
+  <Project Path="ServerView/ServerView.csproj" Id="2c24abba-dd11-428c-b412-44f559ffe508">
+    <BuildDependency Project="ServerArquitecture/ServerArquitecture.csproj" />
+    <BuildDependency Project="ToolBox/ToolBox.csproj" />
+  </Project>
+  <Project Path="ToolBox/ToolBox.csproj" Id="80677cf9-d96e-4caa-8317-ff628c7c1df5" />
 </Solution>

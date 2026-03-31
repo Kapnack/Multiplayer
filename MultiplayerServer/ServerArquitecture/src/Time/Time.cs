@@ -2,14 +2,14 @@
 
 using ImageCampus.ToolBox.Services;
 
-namespace MultiplayerServer.src.Time
+namespace MultiplayerServer.src
 {
     internal class Time : IService
     {
         private static Stopwatch stopwatch = Stopwatch.StartNew();
 
         private double lastTime;
-        public double DeltaTime { get; private set; }
+        public float DeltaTime { get; private set; }
 
         public double RealTimeSinceStartUp => stopwatch.Elapsed.TotalSeconds;
 
@@ -24,7 +24,7 @@ namespace MultiplayerServer.src.Time
         {
             double currentTime = stopwatch.Elapsed.TotalSeconds;
 
-            DeltaTime = currentTime - lastTime;
+            DeltaTime = (float)(currentTime - lastTime);
 
             lastTime = currentTime;
         }

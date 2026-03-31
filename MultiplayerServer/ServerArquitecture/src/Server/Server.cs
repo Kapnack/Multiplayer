@@ -1,14 +1,15 @@
-﻿using MultiplayerServer.src.Time;
+﻿using ImageCampus.ToolBox.Dataflow;
+using MultiplayerServer.src;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography;
-using System.Text;
+using ImageCampus.ToolBox.Services;
 using System.Threading;
 
 namespace KapNet
 {
-    public class Server : IReceiveData, IDisposable
+    public class Server : IReceiveData, IInitable, ITickable, IDisposable
     {
         bool running = true;
 
@@ -16,7 +17,7 @@ namespace KapNet
         public int timeout = 10;
 
         private UdpConnection connection;
-        Time time;
+        Time Time => ServiceProvider.Instance.GetService<Time>();
 
         private RSACryptoServiceProvider rsa;
         private string publicKey;
@@ -29,17 +30,8 @@ namespace KapNet
 
         private uint id = 0;
 
-        public void Run()
+        public void Init()
         {
-            Init();
-            Update();
-            Dispose();
-        }
-
-        void Init()
-        {
-            time = new Time();
-
             connection = new UdpConnection(port, this);
             Console.WriteLine("Server started");
 
@@ -47,35 +39,14 @@ namespace KapNet
             publicKey = rsa.ToXmlString(false);
         }
 
-        void Update()
+        public void LateInit()
         {
-            const int tickRate = 60;
-            int delay = 1000 / tickRate;
+        }
 
-            while (running)
-            {
-                int start = Environment.TickCount;
-
-                connection?.FlushReceiveData();
-                CheckTimeouts();
-
-                int elapsed = Environment.TickCount - start;
-                int sleepTime = delay - elapsed;
-
-                if (Console.KeyAvailable)
-                {
-                    ConsoleKeyInfo key = Console.ReadKey(true);
-
-                    if (key.Key == ConsoleKey.Escape)
-                    {
-                        Console.WriteLine("Shutting down...");
-                        running = false;
-                    }
-                }
-
-                if (sleepTime > 0)
-                    Thread.Sleep(sleepTime);
-            }
+        public void Tick(float deltaTime)
+        {
+            connection?.FlushReceiveData();
+            CheckTimeouts();
         }
 
         void Unload()
@@ -96,7 +67,7 @@ namespace KapNet
             PacketType type = PacketBuilder.GetType(data);
             byte[] payload = PacketBuilder.GetPayload(data);
 
-            clients[ip] = time.RealTimeSinceStartUp;
+            clients[ip] = Time.RealTimeSinceStartUp;
 
             if (PacketBuilder.CalculateCheckSum(data, 0, sizeof(int) * 2) != PacketBuilder.GetCheckSum1(data) ||
                 PacketBuilder.CalculateCheckSum(data, 0, sizeof(int)) != PacketBuilder.GetCheckSum2(data))
@@ -220,7 +191,7 @@ namespace KapNet
 
         void CheckTimeouts()
         {
-            double now = time.RealTimeSinceStartUp;
+            double now = Time.RealTimeSinceStartUp;
             List<IPEndPoint> toRemove = new List<IPEndPoint>();
 
             foreach (KeyValuePair<IPEndPoint, double> c in clients)

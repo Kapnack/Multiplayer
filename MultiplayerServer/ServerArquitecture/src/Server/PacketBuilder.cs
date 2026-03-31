@@ -46,10 +46,10 @@ namespace KapNet
 
         public static int CalculateCheckSum(byte[] data, int startOffset = 0, int endOffset = 0)
         {
-            byte checksum = default(byte);
+            int checksum = 0;
 
             for (int i = startOffset; i < data.Length - endOffset; ++i)
-                checksum ^= data[i];
+                checksum ^= data[i] << (i & 3) << 3;
 
             return checksum;
         }
