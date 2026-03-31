@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ImageCampus.ToolBox.Dataflow;
+using ImageCampus.ToolBox.Services;
 using MultiplayerServer.src;
 
 namespace ServerView.src
@@ -49,17 +45,16 @@ namespace ServerView.src
                     ConsoleKeyInfo key = Console.ReadKey(true);
 
                     if (key.Key == ConsoleKey.Escape)
-                    {
-                        Console.WriteLine("Shutting down...");
                         running = false;
-                    }
                 }
             }
         }
 
         void Dispose()
         {
+            architecture.Dispose();
             console.Dispose();
+            ServiceProvider.Instance.ClearAllServices();
         }
     }
 }

@@ -20,13 +20,13 @@ namespace ServerView.src
 
         public void Init()
         {
+            EventBus.Subscribe<ConsoleLogEvent>(LogMessage);
+            EventBus.Subscribe<ConsoleWarningEvent>(LogWarning);
+            EventBus.Subscribe<ConsoleErrorEvent>(LogError);
         }
 
         public void LateInit()
         {
-            EventBus.Subscribe<ConsoleLogEvent>(LogMessage);
-            EventBus.Subscribe<ConsoleWarningEvent>(LogWarning);
-            EventBus.Subscribe<ConsoleErrorEvent>(LogError);
         }
 
         private void LogMessage(in ConsoleLogEvent consoleLogEvent)

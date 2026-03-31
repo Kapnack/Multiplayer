@@ -6,6 +6,7 @@ using System.Net;
 using System.Security.Cryptography;
 using ImageCampus.ToolBox.Services;
 using System.Threading;
+using ServerArquitecture.src;
 
 namespace KapNet
 {
@@ -33,14 +34,14 @@ namespace KapNet
         public void Init()
         {
             connection = new UdpConnection(port, this);
-            Console.WriteLine("Server started");
-
             rsa = new RSACryptoServiceProvider();
+
             publicKey = rsa.ToXmlString(false);
         }
 
         public void LateInit()
         {
+            ServerConsole.Log("Server started");
         }
 
         public void Tick(float deltaTime)
@@ -59,7 +60,9 @@ namespace KapNet
 
         public void Dispose()
         {
+            ServerConsole.Log("Shutting down..");
             Unload();
+            ServerConsole.Log("Server Closed");
         }
 
         public void OnReceiveData(byte[] data, IPEndPoint ip)
@@ -85,7 +88,7 @@ namespace KapNet
                     id++;
                     uint newID = id;
 
-                    Console.WriteLine("Client connected: " + ip + " ID: " + newID);
+                    ServerConsole.Log("Client connected: " + ip + " ID: " + newID);
 
                     clientList.Add(ip);
                     uint index = (uint)(clientList.Count - 1);
@@ -151,7 +154,7 @@ namespace KapNet
             if (!clients.ContainsKey(ip))
                 return;
 
-            Console.WriteLine("Client removed: " + ip);
+            ServerConsole.Log("Client removed: " + ip);
 
             clients.Remove(ip);
 
@@ -202,7 +205,7 @@ namespace KapNet
 
             foreach (IPEndPoint ip in toRemove)
             {
-                Console.WriteLine("Client timeout: " + ip);
+                ServerConsole.Log("Client timeout: " + ip);
                 RemoveClient(ip);
             }
         }
