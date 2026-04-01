@@ -2,6 +2,7 @@
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using KapNet;
+using ServerArquitecture.src;
 using System;
 
 namespace MultiplayerServer.src
@@ -38,7 +39,7 @@ namespace MultiplayerServer.src
 
         public void Dispose()
         {
-          
+            ServerConsole.Log("Server Closed");
         }
     }
 }
