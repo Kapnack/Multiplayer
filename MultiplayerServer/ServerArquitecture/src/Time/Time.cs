@@ -4,7 +4,7 @@ using ImageCampus.ToolBox.Services;
 
 namespace MultiplayerServer.src
 {
-    internal class Time : IService
+    public class Time : IService
     {
         private static Stopwatch stopwatch = Stopwatch.StartNew();
 
