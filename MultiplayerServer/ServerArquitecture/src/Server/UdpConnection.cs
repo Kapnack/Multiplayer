@@ -1,4 +1,4 @@
-using KapNet;
+using ServerArquitecture.src;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -71,12 +71,11 @@ namespace KapNet
             }
             catch (SocketException e)
             {
-                // This happens when a client disconnects, as we fail to send to that port.
-                Console.Write("[UdpConnection] " + e.Message);
+                ServerConsole.Error("[UdpConnection] " + e.Message);
             }
             catch (Exception e)
             {
-                Console.WriteLine("An unexpected error occurred: " + e.Message);
+                ServerConsole.Error("An unexpected error occurred: " + e.Message);
             }
 
             connection.BeginReceive(OnReceive, null);
