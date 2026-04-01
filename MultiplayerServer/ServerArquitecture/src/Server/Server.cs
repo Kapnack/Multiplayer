@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography;
 using ImageCampus.ToolBox.Services;
-using System.Threading;
 using ServerArquitecture.src;
 
 namespace KapNet
@@ -165,7 +164,7 @@ namespace KapNet
 
             uint removedId = 0;
 
-            foreach (var kvp in idsToIndex)
+            foreach (KeyValuePair<uint, uint> kvp in idsToIndex)
             {
                 if (kvp.Value == index)
                 {
@@ -185,7 +184,6 @@ namespace KapNet
                     idsToIndex[key]--;
             }
 
-            // Notify others
             Broadcast(PacketBuilder.Create(
                 PacketType.Disconnect,
                 BitConverter.GetBytes(removedId)
