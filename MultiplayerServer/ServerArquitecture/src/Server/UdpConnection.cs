@@ -104,22 +104,5 @@ namespace KapNet
         {
             connection.Send(data, data.Length, ipEndPoint);
         }
-
-        public void Send(byte[] data, IEnumerable<IPEndPoint> ipEndpoints)
-        {
-            foreach (IPEndPoint ip in ipEndpoints)
-                connection.Send(data, data.Length, ip);
-        }
-
-        public void Send(byte[] data, IEnumerable<IPEndPoint> ipEndpoints, IPEndPoint expeption)
-        {
-            foreach (IPEndPoint ip in ipEndpoints)
-            {
-                if (ip == expeption)
-                    continue;
-
-                connection.Send(data, data.Length, ip);
-            }
-        }
     }
 }
