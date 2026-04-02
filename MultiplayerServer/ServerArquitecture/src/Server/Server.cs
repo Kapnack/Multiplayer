@@ -71,43 +71,10 @@ namespace KapNet
 
             clients[ip] = Time.RealTimeSinceStartUp;
 
-            if (PacketUtility.CalculateCheckSum(data, 0, sizeof(int) * 2) != PacketUtility.GetCheckSum1(data) ||
-                PacketUtility.CalculateCheckSum(data, 0, sizeof(int)) != PacketUtility.GetCheckSum2(data))
-            {
-                return;
-            }
-
             switch (type)
             {
                 case PacketType.Handshake:
-
-                    if (clientList.Contains(ip))
-                        return;
-
-                    id++;
-                    uint newID = id;
-
-                    ServerConsole.Log("Client connected: " + ip + " ID: " + newID);
-
-                    clientList.Add(ip);
-                    uint index = (uint)(clientList.Count - 1);
-
-                    idsToIndex[newID] = index;
-
-                    Send(ip, PacketType.HandshakeResponse, BitConverter.GetBytes(newID));
-
-                    foreach (KeyValuePair<uint, uint> existing in idsToIndex)
-                    {
-                        if (existing.Key == newID) continue;
-
-                        Send(ip, PacketType.Spawn, BitConverter.GetBytes(existing.Key));
-                    }
-
-                    BroadcastWithException(
-                        PacketFactory.Create(PacketType.Spawn, BitConverter.GetBytes(newID)),
-                        ip
-                    );
-
+                    HandleHandShake(ip);
                     break;
 
                 case PacketType.Ping:
@@ -122,6 +89,36 @@ namespace KapNet
                     RemoveClient(ip);
                     break;
             }
+        }
+
+        private void HandleHandShake(IPEndPoint ip)
+        {
+            if (clientList.Contains(ip))
+                return;
+
+            id++;
+            uint newID = id;
+
+            ServerConsole.Log("Client connected: " + ip + " ID: " + newID);
+
+            clientList.Add(ip);
+            uint index = (uint)(clientList.Count - 1);
+
+            idsToIndex[newID] = index;
+
+            Send(ip, PacketType.HandshakeResponse, BitConverter.GetBytes(newID));
+
+            foreach (KeyValuePair<uint, uint> existing in idsToIndex)
+            {
+                if (existing.Key == newID) continue;
+
+                Send(ip, PacketType.Spawn, BitConverter.GetBytes(existing.Key));
+            }
+
+            BroadcastWithException(
+                PacketFactory.Create(PacketType.Spawn, BitConverter.GetBytes(newID)),
+                ip
+            );
         }
 
         void Send(IPEndPoint ip, PacketType type, byte[] payload = null)
