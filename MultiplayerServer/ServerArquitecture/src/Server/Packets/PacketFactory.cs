@@ -34,6 +34,9 @@ namespace KapNet
 
         private const int PacketConstSpace = sizeof(PacketType) + sizeof(int) + sizeof(PacketMetaData) + sizeof(int) * 2;
 
+        public PacketFactory()
+        { }
+
         public byte[] Create(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
         {
             ++packetID;
