@@ -1,4 +1,6 @@
-using KapNet;
+using Assets.Code.Network.packets;
+using ImageCampus.ToolBox.Services;
+using ServerArquitecture.src.Server.Packets;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -18,6 +20,8 @@ public class MyClient : MonoBehaviour
 
     Queue<Action> mainThreadQueue = new Queue<Action>();
 
+    PacketFactory PacketFactory => ServiceProvider.Instance.GetService<PacketFactory>();
+
     void Start()
     {
         Application.runInBackground = true;
@@ -29,6 +33,8 @@ public class MyClient : MonoBehaviour
         serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 7777);
 
         client.BeginReceive(OnReceive, null);
+
+        ServiceProvider.Instance.AddService<PacketFactory>(new PacketFactory());
 
         SendHandshake();
     }
@@ -53,11 +59,11 @@ public class MyClient : MonoBehaviour
 
     void SendHandshake()
     {
-        Send(PacketBuilder.Create(PacketType.Handshake));
+        Send(PacketFactory.Create(PacketType.Handshake));
     }
     void SendPing()
     {
-        Send(PacketBuilder.Create(PacketType.Ping));
+        Send(PacketFactory.Create(PacketType.Ping));
     }
 
     void SendPosition(Vector3 pos)
@@ -69,7 +75,7 @@ public class MyClient : MonoBehaviour
         Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, payload, 8, 4);
         Buffer.BlockCopy(BitConverter.GetBytes(pos.z), 0, payload, 12, 4);
 
-        Send(PacketBuilder.Create(PacketType.Data, payload));
+        Send(PacketFactory.Create(PacketType.Data, payload));
     }
 
     void Send(byte[] data)
@@ -81,12 +87,12 @@ public class MyClient : MonoBehaviour
     {
         byte[] data = client.EndReceive(result, ref serverEndPoint);
 
-        if (PacketBuilder.CalculateCheckSum(data, 0, sizeof(int) * 2) != PacketBuilder.GetCheckSum1(data) ||
-            PacketBuilder.CalculateCheckSum(data, 0, sizeof(int)) != PacketBuilder.GetCheckSum2(data))
+        if (PacketUtility.CalculateCheckSum(data, 0, sizeof(int) * 2) != PacketUtility.GetCheckSum1(data) ||
+            PacketUtility.CalculateCheckSum(data, 0, sizeof(int)) != PacketUtility.GetCheckSum2(data))
             return;
 
-        PacketType type = PacketBuilder.GetType(data);
-        byte[] payload = PacketBuilder.GetPayload(data);
+        PacketType type = PacketUtility.GetType(data);
+        byte[] payload = PacketUtility.GetPayload(data);
 
         lock (mainThreadQueue)
         {
@@ -188,7 +194,7 @@ public class MyClient : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        Send(PacketBuilder.Create(PacketType.Disconnect));
+        Send(PacketFactory.Create(PacketType.Disconnect));
         client.Close();
     }
 }

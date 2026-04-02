@@ -11,6 +11,8 @@ namespace ServerView.src
 
         private bool running = true;
 
+        Time Time => ServiceProvider.Instance.GetService<Time>();
+
         public void Run()
         {
             Init();
@@ -38,7 +40,7 @@ namespace ServerView.src
         {
             while (running)
             {
-                architecture.Tick();
+                architecture.Tick(Time.DeltaTime);
 
                 if (Console.KeyAvailable)
                 {

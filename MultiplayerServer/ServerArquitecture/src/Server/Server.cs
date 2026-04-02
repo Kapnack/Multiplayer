@@ -6,18 +6,18 @@ using System.Net;
 using System.Security.Cryptography;
 using ImageCampus.ToolBox.Services;
 using ServerArquitecture.src;
+using ServerArquitecture.src.Server.Packets;
 
 namespace KapNet
 {
     public class Server : IReceiveData, IInitable, ITickable, IDisposable
     {
-        bool running = true;
-
         public int port = 7777;
         public int timeout = 10;
 
         private UdpConnection connection;
         Time Time => ServiceProvider.Instance.GetService<Time>();
+        PacketFactory PacketFactory => ServiceProvider.Instance.GetService<PacketFactory>();
 
         private RSACryptoServiceProvider rsa;
         private string publicKey;
@@ -66,13 +66,13 @@ namespace KapNet
 
         public void OnReceiveData(byte[] data, IPEndPoint ip)
         {
-            PacketType type = PacketBuilder.GetType(data);
-            byte[] payload = PacketBuilder.GetPayload(data);
+            PacketType type = PacketUtility.GetType(data);
+            byte[] payload = PacketUtility.GetPayload(data);
 
             clients[ip] = Time.RealTimeSinceStartUp;
 
-            if (PacketBuilder.CalculateCheckSum(data, 0, sizeof(int) * 2) != PacketBuilder.GetCheckSum1(data) ||
-                PacketBuilder.CalculateCheckSum(data, 0, sizeof(int)) != PacketBuilder.GetCheckSum2(data))
+            if (PacketUtility.CalculateCheckSum(data, 0, sizeof(int) * 2) != PacketUtility.GetCheckSum1(data) ||
+                PacketUtility.CalculateCheckSum(data, 0, sizeof(int)) != PacketUtility.GetCheckSum2(data))
             {
                 return;
             }
@@ -104,7 +104,7 @@ namespace KapNet
                     }
 
                     BroadcastWithException(
-                        PacketBuilder.Create(PacketType.Spawn, BitConverter.GetBytes(newID)),
+                        PacketFactory.Create(PacketType.Spawn, BitConverter.GetBytes(newID)),
                         ip
                     );
 
@@ -126,7 +126,7 @@ namespace KapNet
 
         void Send(IPEndPoint ip, PacketType type, byte[] payload = null)
         {
-            connection.Send(PacketBuilder.Create(type, payload), ip);
+            connection.Send(PacketFactory.Create(type, payload), ip);
         }
 
         void Broadcast(byte[] data)
@@ -178,13 +178,13 @@ namespace KapNet
 
             List<uint> keys = new List<uint>(idsToIndex.Keys);
 
-            foreach (var key in keys)
+            foreach (uint key in keys)
             {
                 if (idsToIndex[key] > index)
                     idsToIndex[key]--;
             }
 
-            Broadcast(PacketBuilder.Create(
+            Broadcast(PacketFactory.Create(
                 PacketType.Disconnect,
                 BitConverter.GetBytes(removedId)
             ));
