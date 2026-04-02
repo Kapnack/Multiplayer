@@ -1,4 +1,5 @@
 using ServerArquitecture.src;
+using ServerArquitecture.src.Server.Packets;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -65,6 +66,12 @@ namespace KapNet
                 DataReceived dataReceived = new DataReceived();
                 dataReceived.data = connection.EndReceive(ar, ref dataReceived.ipEndPoint);
 
+                if (PacketUtility.CalculateCheckSum(dataReceived.data, 0, PacketLayout.CheckSum1EndOffSet) != PacketUtility.GetCheckSum1(dataReceived.data) ||
+                    PacketUtility.CalculateCheckSum(dataReceived.data, 0, PacketLayout.CheckSum2EndOffSet) != PacketUtility.GetCheckSum2(dataReceived.data))
+                {
+                    return;
+                }
+
                 lock (handler)
                 {
                     dataReceivedQueue.Enqueue(dataReceived);
@@ -78,8 +85,11 @@ namespace KapNet
             {
                 ServerConsole.Error("An unexpected error occurred: " + e.Message);
             }
+            finally
+            {
+                connection.BeginReceive(OnReceive, null);
+            }
 
-            connection.BeginReceive(OnReceive, null);
         }
 
         public void Send(byte[] data)
