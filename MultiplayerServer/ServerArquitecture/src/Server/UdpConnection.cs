@@ -18,7 +18,6 @@ namespace KapNet
         private readonly UdpClient connection;
         private IReceiveData receiver = null;
         private Queue<DataReceived> dataReceivedQueue = new Queue<DataReceived>();
-        private List<NetworkPacket> packetsAwaitingResponce = new List<NetworkPacket>();
 
         object handler = new object();
 
@@ -66,8 +65,7 @@ namespace KapNet
                 DataReceived dataReceived = new DataReceived();
                 dataReceived.data = connection.EndReceive(ar, ref dataReceived.ipEndPoint);
 
-                if (PacketUtility.CalculateCheckSum(dataReceived.data, 0, PacketLayout.CheckSum1EndOffSet) != PacketUtility.GetCheckSum1(dataReceived.data) ||
-                    PacketUtility.CalculateCheckSum(dataReceived.data, 0, PacketLayout.CheckSum2EndOffSet) != PacketUtility.GetCheckSum2(dataReceived.data))
+                if (IsValidCheckSum(dataReceived.data))
                 {
                     return;
                 }
@@ -89,7 +87,12 @@ namespace KapNet
             {
                 connection.BeginReceive(OnReceive, null);
             }
+        }
 
+        private bool IsValidCheckSum(byte[] data)
+        {
+            return PacketUtility.CalculateCheckSum(data, 0, PacketLayout.CheckSum1EndOffSet) == PacketUtility.GetCheckSum1(data) &&
+                PacketUtility.CalculateCheckSum(data, 0, PacketLayout.CheckSum2EndOffSet) == PacketUtility.GetCheckSum2(data);
         }
 
         public void Send(byte[] data)
@@ -97,9 +100,26 @@ namespace KapNet
             connection.Send(data, data.Length);
         }
 
-        public void Send(byte[] data, IPEndPoint ipEndpoint)
+        public void Send(byte[] data, IPEndPoint ipEndPoint)
         {
-            connection.Send(data, data.Length, ipEndpoint);
+            connection.Send(data, data.Length, ipEndPoint);
+        }
+
+        public void Send(byte[] data, IEnumerable<IPEndPoint> ipEndpoints)
+        {
+            foreach (IPEndPoint ip in ipEndpoints)
+                connection.Send(data, data.Length, ip);
+        }
+
+        public void Send(byte[] data, IEnumerable<IPEndPoint> ipEndpoints, IPEndPoint expeption)
+        {
+            foreach (IPEndPoint ip in ipEndpoints)
+            {
+                if (ip == expeption)
+                    continue;
+
+                connection.Send(data, data.Length, ip);
+            }
         }
     }
 }
