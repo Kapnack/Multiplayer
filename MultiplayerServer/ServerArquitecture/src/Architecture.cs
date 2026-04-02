@@ -43,7 +43,7 @@ namespace MultiplayerServer.src
 
         public void Dispose()
         {
-            ServerConsole.Log("Server Closed");
+            server.Dispose();
         }
     }
 }
