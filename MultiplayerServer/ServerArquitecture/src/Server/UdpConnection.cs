@@ -17,6 +17,7 @@ namespace KapNet
         private readonly UdpClient connection;
         private IReceiveData receiver = null;
         private Queue<DataReceived> dataReceivedQueue = new Queue<DataReceived>();
+        private List<NetworkPacket> packetsAwaitingResponce = new List<NetworkPacket>();
 
         object handler = new object();
 
