@@ -2,19 +2,19 @@
 using ServerArquitecture.src.Server.Packets;
 using System;
 
-namespace Assets.Code.Network.packets
+namespace KapNet
 {
     public enum PacketType : int
     {
         Handshake,
-        HandshakeResponse,
-        Spawn,
-        PlayerJoined,
-        PlayerLeft,
+        Acknowledgement,
+        ClientJoined,
+        ClientLeft,
         Ping,
         Pong,
         Data,
-        Disconnect
+        DisconnectClient,
+        ServerShutDown
     }
 
     [Flags]
@@ -34,7 +34,10 @@ namespace Assets.Code.Network.packets
 
         private const int PacketConstSpace = sizeof(PacketType) + sizeof(int) + sizeof(PacketMetaData) + sizeof(int) * 2;
 
-        public byte[] Create(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
+        public PacketFactory()
+        { }
+
+        public (byte[] data, uint packetId) Create(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
         {
             ++packetID;
 
@@ -52,7 +55,7 @@ namespace Assets.Code.Network.packets
             BitConverter.GetBytes(PacketUtility.CalculateCheckSum(data, 0, PacketLayout.CheckSum1EndOffSet)).CopyTo(data, data.Length - PacketLayout.CheckSum1EndOffSet);
             BitConverter.GetBytes(PacketUtility.CalculateCheckSum(data, 0, PacketLayout.CheckSum2EndOffSet)).CopyTo(data, data.Length - PacketLayout.CheckSum2EndOffSet);
 
-            return data;
+            return (data, packetID);
         }
     }
 }

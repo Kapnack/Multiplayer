@@ -1,17 +1,43 @@
 ﻿using ImageCampus.ToolBox.Dataflow;
+using ImageCampus.ToolBox.Services;
 using MultiplayerServer.src;
+using ServerArquitecture.src;
+using ServerArquitecture.src.Server.Packets;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography;
-using ImageCampus.ToolBox.Services;
-using ServerArquitecture.src;
-using ServerArquitecture.src.Server.Packets;
 
 namespace KapNet
 {
+    public class ClientData
+    {
+        public uint id;
+        public double lastResponce;
+    }
+
+    public class PacketAwaitingResponce
+    {
+        public uint packetID;
+        public byte[] data;
+        public IPEndPoint ipEndPoint;
+        public double lastTimeSent;
+
+        public PacketAwaitingResponce(uint packetID, byte[] data, IPEndPoint ipEndPoint, double lastTimeSent)
+        {
+            this.packetID = packetID;
+            this.data = data;
+            this.ipEndPoint = ipEndPoint;
+            this.lastTimeSent = lastTimeSent;
+        }
+    }
+
     public class Server : IReceiveData, IInitable, ITickable, IDisposable
     {
+        private delegate void PacketTypeDelegate(NetworkPacket networkPacket);
+        private delegate void SendPacketMetaDataDelegate(NetworkPacket packet, byte[] data);
+        private delegate void RecivePacketMetaDataDelegate(NetworkPacket packet);
+
         public int port = 7777;
         public int timeout = 10;
 
@@ -22,19 +48,63 @@ namespace KapNet
         private RSACryptoServiceProvider rsa;
         private string publicKey;
 
-        private Dictionary<IPEndPoint, double> clients = new Dictionary<IPEndPoint, double>();
+        private Dictionary<IPEndPoint, ClientData> clients = new Dictionary<IPEndPoint, ClientData>();
 
-        private Dictionary<uint, uint> idsToIndex = new Dictionary<uint, uint>();
+        private List<NetworkPacket> recivedAndUsedPacket = new List<NetworkPacket>();
+        private List<PacketAwaitingResponce> packetsAwaitingResponce = new List<PacketAwaitingResponce>();
+        private List<NetworkPacket> cryticalPackets = new List<NetworkPacket>();
 
-        private List<IPEndPoint> clientList = new List<IPEndPoint>();
+        private readonly Dictionary<PacketType, PacketTypeDelegate> packetTypeStrategy;
+        private readonly Dictionary<PacketMetaData, SendPacketMetaDataDelegate> sendingMetaDataStrategy;
+        private readonly Dictionary<PacketMetaData, RecivePacketMetaDataDelegate> recivingMetaDataStrategy;
 
-        private uint id = 0;
+        private uint currentClientID = 0;
+
+        internal Server()
+        {
+            packetTypeStrategy = new Dictionary<PacketType, PacketTypeDelegate>()
+            {
+                { PacketType.Handshake, HandleHandShake },
+                { PacketType.Ping, HandlePing },
+                { PacketType.Data, HandleData },
+                { PacketType.ClientLeft, HandleClientLeft },
+                {PacketType.Acknowledgement, HandleAcknowledgement }
+            };
+
+            sendingMetaDataStrategy = new Dictionary<PacketMetaData, SendPacketMetaDataDelegate>()
+            {
+                { PacketMetaData.Reliable, HandleReliableMessageSend },
+                { PacketMetaData.Crytical, HandleCriticalMessage }
+            };
+
+            recivingMetaDataStrategy = new Dictionary<PacketMetaData, RecivePacketMetaDataDelegate>()
+            {
+                {PacketMetaData.Reliable, HandleReliablePacketRecived },
+                {PacketMetaData.Crytical, HandleCriticalPacketRecived }
+            };
+        }
+
+        private void HandleCriticalPacketRecived(NetworkPacket packet)
+        {
+            cryticalPackets.Add(packet);
+        }
+
+        private void HandleAcknowledgement(NetworkPacket networkPacket)
+        {
+            int packetID = BitConverter.ToInt32(PacketUtility.GetPayload(networkPacket.payload), 0);
+            packetsAwaitingResponce.RemoveAll(p => p.packetID == packetID);
+        }
+
+        private void HandleReliablePacketRecived(NetworkPacket packet)
+        {
+            Send(packet.ipEndPoint, PacketType.Acknowledgement, BitConverter.GetBytes(packet.packetID));
+            recivedAndUsedPacket.Add(packet);
+        }
 
         public void Init()
         {
             connection = new UdpConnection(port, this);
             rsa = new RSACryptoServiceProvider();
-
             publicKey = rsa.ToXmlString(false);
         }
 
@@ -46,14 +116,15 @@ namespace KapNet
         public void Tick(float deltaTime)
         {
             connection?.FlushReceiveData();
-            CheckTimeouts();
+            CheckUserTimeouts();
+            CheckPacketsToResent();
         }
 
         void Unload()
         {
-            foreach (IPEndPoint client in new List<IPEndPoint>(clientList))
+            foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
             {
-                RemoveClient(client);
+                DisconectClient(client.Key);
             }
         }
 
@@ -67,141 +138,195 @@ namespace KapNet
         public void OnReceiveData(byte[] data, IPEndPoint ip)
         {
             PacketType type = PacketUtility.GetType(data);
+            uint packetID = PacketUtility.GetPacketID(data);
+            PacketMetaData metaData = PacketUtility.GetMetaData(data);
             byte[] payload = PacketUtility.GetPayload(data);
 
-            clients[ip] = Time.RealTimeSinceStartUp;
-
-            switch (type)
-            {
-                case PacketType.Handshake:
-                    HandleHandShake(ip);
-                    break;
-
-                case PacketType.Ping:
-                    Send(ip, PacketType.Pong);
-                    break;
-
-                case PacketType.Data:
-                    Broadcast(data);
-                    break;
-
-                case PacketType.Disconnect:
-                    RemoveClient(ip);
-                    break;
-            }
-        }
-
-        private void HandleHandShake(IPEndPoint ip)
-        {
-            if (clientList.Contains(ip))
-                return;
-
-            id++;
-            uint newID = id;
-
-            ServerConsole.Log("Client connected: " + ip + " ID: " + newID);
-
-            clientList.Add(ip);
-            uint index = (uint)(clientList.Count - 1);
-
-            idsToIndex[newID] = index;
-
-            Send(ip, PacketType.HandshakeResponse, BitConverter.GetBytes(newID));
-
-            foreach (KeyValuePair<uint, uint> existing in idsToIndex)
-            {
-                if (existing.Key == newID) continue;
-
-                Send(ip, PacketType.Spawn, BitConverter.GetBytes(existing.Key));
-            }
-
-            BroadcastWithException(
-                PacketFactory.Create(PacketType.Spawn, BitConverter.GetBytes(newID)),
+            NetworkPacket packet = new NetworkPacket(
+                type,
+                packetID,
+                metaData,
+                payload,
+                (float)Time.RealTimeSinceStartUp,
+                clients.ContainsKey(ip) ? (int)clients[ip].id : -1,
                 ip
             );
-        }
 
-        void Send(IPEndPoint ip, PacketType type, byte[] payload = null)
-        {
-            connection.Send(PacketFactory.Create(type, payload), ip);
-        }
-
-        void Broadcast(byte[] data)
-        {
-            foreach (IPEndPoint client in clientList)
+            if (recivedAndUsedPacket.Contains(packet))
             {
-                connection.Send(data, client);
+                HandleAcknowledgement(packet);
+                return;
+            }
+
+            HandleRecivedMetaData(packet);
+
+            if (packetTypeStrategy.TryGetValue(packet.type, out PacketTypeDelegate handler))
+                handler(packet);
+        }
+
+        private void HandleRecivedMetaData(NetworkPacket packet)
+        {
+            foreach (KeyValuePair<PacketMetaData, RecivePacketMetaDataDelegate> strategy in recivingMetaDataStrategy)
+            {
+                if (packet.metaData.HasFlag(strategy.Key))
+                    strategy.Value(packet);
             }
         }
 
-        void BroadcastWithException(byte[] data, IPEndPoint exception)
+        private void HandleSendMetaData(NetworkPacket packet, byte[] data)
         {
-            foreach (IPEndPoint client in clientList)
+            foreach (KeyValuePair<PacketMetaData, SendPacketMetaDataDelegate> strategy in sendingMetaDataStrategy)
             {
-                if (client.Equals(exception))
+                if (packet.metaData.HasFlag(strategy.Key))
+                {
+                    strategy.Value(packet, data);
+                }
+            }
+        }
+
+        private void HandlePing(NetworkPacket packet)
+        {
+            IPEndPoint ip = packet.ipEndPoint;
+
+            if (clients.ContainsKey(ip))
+                clients[ip].lastResponce = Time.RealTimeSinceStartUp;
+
+            Send(ip, PacketType.Pong);
+        }
+
+        private void HandleData(NetworkPacket packet)
+        {
+            byte[] newPayload = PacketUtility.Combine(
+                BitConverter.GetBytes(packet.clientId),
+                packet.payload
+            );
+
+            Broadcast(packet.ipEndPoint, PacketType.Data, newPayload, packet.metaData);
+        }
+
+        private void HandleHandShake(NetworkPacket packet)
+        {
+            if (clients.ContainsKey(packet.ipEndPoint))
+                return;
+
+            ++currentClientID;
+            uint newID = currentClientID;
+
+            clients.Add(packet.ipEndPoint, new ClientData
+            {
+                id = newID,
+                lastResponce = Time.RealTimeSinceStartUp
+            });
+
+            ServerConsole.Log($"Client connected: {packet.ipEndPoint} ID: {newID}");
+
+            Send(packet.ipEndPoint, PacketType.Acknowledgement, BitConverter.GetBytes(newID), PacketMetaData.Reliable);
+        }
+
+        private void HandleClientLeft(NetworkPacket packet)
+        {
+            DisconectClient(packet.ipEndPoint);
+        }
+
+        private void HandleReliableMessageSend(NetworkPacket packet, byte[] data)
+        {
+            packetsAwaitingResponce.Add(new PacketAwaitingResponce(
+                packet.packetID,
+                data,
+                packet.ipEndPoint,
+                Time.RealTimeSinceStartUp
+            ));
+        }
+
+        private void HandleCriticalMessage(NetworkPacket packet, byte[] data)
+        {
+            cryticalPackets.Add(packet);
+        }
+
+        void Send(IPEndPoint ip, PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
+        {
+            (byte[] data, uint packetId) = PacketFactory.Create(type, payload, metaData);
+
+            NetworkPacket packet = new NetworkPacket(
+                type,
+                packetId,
+                metaData,
+                payload,
+                (float)Time.RealTimeSinceStartUp,
+                clients.ContainsKey(ip) ? (int)clients[ip].id : -1,
+                ip
+            );
+
+            HandleSendMetaData(packet, data);
+
+            SendRaw(data, ip);
+        }
+
+        void SendRaw(byte[] data, IPEndPoint ip)
+        {
+            connection.Send(data, ip);
+        }
+
+        void Broadcast(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
+        {
+            foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
+            {
+                Send(client.Key, type, payload, metaData);
+            }
+        }
+
+        void Broadcast(IPEndPoint exception, PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
+        {
+            foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
+            {
+                if (client.Key.Equals(exception))
                     continue;
 
-                connection.Send(data, client);
+                Send(client.Key, type, payload, metaData);
             }
         }
 
-        void RemoveClient(IPEndPoint ip)
+        void DisconectClient(IPEndPoint ip)
         {
             if (!clients.ContainsKey(ip))
                 return;
 
-            ServerConsole.Log("Client removed: " + ip);
+            Broadcast(ip, PacketType.DisconnectClient, BitConverter.GetBytes(clients[ip].id), PacketMetaData.Reliable);
 
             clients.Remove(ip);
-
-            int index = clientList.IndexOf(ip);
-            if (index == -1) return;
-
-            clientList.RemoveAt(index);
-
-            uint removedId = 0;
-
-            foreach (KeyValuePair<uint, uint> kvp in idsToIndex)
-            {
-                if (kvp.Value == index)
-                {
-                    removedId = kvp.Key;
-                    break;
-                }
-            }
-
-            if (removedId != 0)
-                idsToIndex.Remove(removedId);
-
-            List<uint> keys = new List<uint>(idsToIndex.Keys);
-
-            foreach (uint key in keys)
-            {
-                if (idsToIndex[key] > index)
-                    idsToIndex[key]--;
-            }
-
-            Broadcast(PacketFactory.Create(
-                PacketType.Disconnect,
-                BitConverter.GetBytes(removedId)
-            ));
+            ServerConsole.Log("Client removed: " + ip);
         }
 
-        void CheckTimeouts()
+        void CheckUserTimeouts()
         {
-            double now = Time.RealTimeSinceStartUp;
             List<IPEndPoint> toRemove = new List<IPEndPoint>();
 
-            foreach (KeyValuePair<IPEndPoint, double> c in clients)
+            foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
             {
-                if (now - c.Value > timeout)
-                    toRemove.Add(c.Key);
+                if (Time.RealTimeSinceStartUp - client.Value.lastResponce > timeout)
+                    toRemove.Add(client.Key);
             }
 
             foreach (IPEndPoint ip in toRemove)
             {
                 ServerConsole.Log("Client timeout: " + ip);
-                RemoveClient(ip);
+                DisconectClient(ip);
+            }
+        }
+
+        void CheckPacketsToResent()
+        {
+            for (int i = 0; i < packetsAwaitingResponce.Count; i++)
+            {
+                PacketAwaitingResponce packet = packetsAwaitingResponce[i];
+
+                if (Time.RealTimeSinceStartUp - packet.lastTimeSent > 3)
+                {
+                    connection.Send(packet.data, packet.ipEndPoint);
+
+                    packet.lastTimeSent = Time.RealTimeSinceStartUp;
+                    packetsAwaitingResponce[i] = packet;
+                }
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿using Assets.Code.Network.packets;
+﻿using KapNet;
 using System;
 
 namespace ServerArquitecture.src.Server.Packets
@@ -15,24 +15,54 @@ namespace ServerArquitecture.src.Server.Packets
             return checksum;
         }
 
+        public static byte[] Combine(params byte[][] arrays)
+        {
+            int totalLength = 0;
+
+            foreach (byte[] arr in arrays)
+                totalLength += arr.Length;
+
+            byte[] result = new byte[totalLength];
+
+            int offset = 0;
+
+            foreach (byte[] arr in arrays)
+            {
+                Buffer.BlockCopy(arr, 0, result, offset, arr.Length);
+                offset += arr.Length;
+            }
+
+            return result;
+        }
+
         public static PacketType GetType(byte[] data)
         {
             return (PacketType)BitConverter.ToUInt32(data, PacketLayout.PacketTypeOffSet);
         }
 
-        public static uint GetID(byte[] data)
+        public static uint GetPacketID(byte[] data)
         {
             return BitConverter.ToUInt32(data, PacketLayout.PacketIDOffSet);
         }
 
+        public static PacketMetaData GetMetaData(byte[] data)
+        {
+            return (PacketMetaData)BitConverter.ToUInt32(data, PacketLayout.PacketMetaDataOffSet);
+        }
+
+        public static uint GetClientID(byte[] data)
+        {
+            return BitConverter.ToUInt32(data, PacketLayout.PacketMetaDataOffSet);
+        }
+
         public static int GetCheckSum1(byte[] data)
         {
-            return BitConverter.ToInt32(data, data.Length - sizeof(int) * 2);
+            return BitConverter.ToInt32(data, data.Length - PacketLayout.CheckSum1EndOffSet);
         }
 
         public static int GetCheckSum2(byte[] data)
         {
-            return BitConverter.ToInt32(data, data.Length - sizeof(int));
+            return BitConverter.ToInt32(data, data.Length - PacketLayout.CheckSum2EndOffSet);
         }
 
         public static byte[] GetPayload(byte[] data)
