@@ -159,12 +159,11 @@ public class MyClient : MonoBehaviour, IReceiveData
 
     void SendPosition(Vector3 pos)
     {
-        byte[] payload = new byte[16];
+        byte[] payload = new byte[12];
 
-        Buffer.BlockCopy(BitConverter.GetBytes(myID), 0, payload, 0, 4);
-        Buffer.BlockCopy(BitConverter.GetBytes(pos.x), 0, payload, 4, 4);
-        Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, payload, 8, 4);
-        Buffer.BlockCopy(BitConverter.GetBytes(pos.z), 0, payload, 12, 4);
+        Buffer.BlockCopy(BitConverter.GetBytes(pos.x), 0, payload, 0, 4);
+        Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, payload, 4, 4);
+        Buffer.BlockCopy(BitConverter.GetBytes(pos.z), 0, payload, 8, 4);
 
         Send(PacketType.Data, payload);
     }
@@ -221,17 +220,7 @@ public class MyClient : MonoBehaviour, IReceiveData
     private void HandleReliablePacketRecived(NetworkPacket packet)
     {
         Send(PacketType.Acknowledgement, BitConverter.GetBytes(packet.packetID));
-        recivedAndUsedPacket[packet.packetID] = (packet);
-    }
-
-    void HandleHandshake(NetworkPacket networkPacket)
-    {
-        myID = BitConverter.ToUInt32(networkPacket.payload, 0);
-        Debug.Log("My ID: " + myID);
-
-        SpawnPlayer(myID, Vector3.one * 3);
-
-        SendPosition(players[myID].transform.position);
+        recivedAndUsedPacket[packet.packetID] = packet;
     }
 
     void HandleSpawn(NetworkPacket packet)
