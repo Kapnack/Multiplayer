@@ -1,15 +1,34 @@
-using Assets.Code.Network.packets;
 using ImageCampus.ToolBox.Services;
+using KapNet;
 using ServerArquitecture.src.Server.Packets;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Sockets;
 using UnityEngine;
 
-public class MyClient : MonoBehaviour
+public class PacketAwaitingResponce
 {
-    UdpClient client;
+    public uint packetID;
+    public byte[] data;
+    public IPEndPoint ipEndPoint;
+    public double lastTimeSent;
+
+    public PacketAwaitingResponce(uint packetID, byte[] data, IPEndPoint ipEndPoint, double lastTimeSent)
+    {
+        this.packetID = packetID;
+        this.data = data;
+        this.ipEndPoint = ipEndPoint;
+        this.lastTimeSent = lastTimeSent;
+    }
+}
+
+public class MyClient : MonoBehaviour, IReceiveData
+{
+    private delegate void PacketTypeDelegate(NetworkPacket networkPacket);
+    private delegate void SendPacketMetaDataDelegate(NetworkPacket packet, byte[] data);
+    private delegate void RecivePacketMetaDataDelegate(NetworkPacket packet);
+
+    UdpConnection client;
     IPEndPoint serverEndPoint;
 
     public GameObject playerPrefab;
@@ -18,9 +37,50 @@ public class MyClient : MonoBehaviour
 
     Dictionary<uint, GameObject> players = new Dictionary<uint, GameObject>();
 
-    Queue<Action> mainThreadQueue = new Queue<Action>();
-
     PacketFactory PacketFactory => ServiceProvider.Instance.GetService<PacketFactory>();
+
+    private Dictionary<uint, NetworkPacket> recivedAndUsedPacket = new Dictionary<uint, NetworkPacket>();
+    private List<PacketAwaitingResponce> packetsAwaitingResponce = new List<PacketAwaitingResponce>();
+    private List<NetworkPacket> cryticalPackets = new List<NetworkPacket>();
+
+    private readonly Dictionary<PacketType, PacketTypeDelegate> packetTypeStrategy;
+    private readonly Dictionary<PacketMetaData, SendPacketMetaDataDelegate> sendingMetaDataStrategy;
+    private readonly Dictionary<PacketMetaData, RecivePacketMetaDataDelegate> recivingMetaDataStrategy;
+
+    public MyClient()
+    {
+        packetTypeStrategy = new Dictionary<PacketType, PacketTypeDelegate>()
+        {
+            { PacketType.Acknowledgement, HandleAcknowledgement },
+            { PacketType.Data, HandleData },
+            { PacketType.ClientLeft, HandleClientLeft },
+            { PacketType.ClientJoined, HandleSpawn },
+            { PacketType.SendID, HandleID },
+        };
+
+        sendingMetaDataStrategy = new Dictionary<PacketMetaData, SendPacketMetaDataDelegate>()
+            {
+                { PacketMetaData.Reliable, HandleReliableMessageSend },
+                { PacketMetaData.Crytical, HandleCriticalMessage }
+            };
+
+        recivingMetaDataStrategy = new Dictionary<PacketMetaData, RecivePacketMetaDataDelegate>()
+            {
+                {PacketMetaData.Reliable, HandleReliablePacketRecived },
+                {PacketMetaData.Crytical, HandleCriticalPacketRecived }
+            };
+    }
+
+    private void HandleID(NetworkPacket networkPacket)
+    {
+        uint userID = BitConverter.ToUInt32(networkPacket.payload, 0);
+
+        myID = userID;
+
+        Debug.Log("My ID: " + myID);
+
+        SpawnPlayer(myID, Vector3.one * 3);
+    }
 
     void Start()
     {
@@ -29,10 +89,8 @@ public class MyClient : MonoBehaviour
         Screen.fullScreen = false;
         Screen.SetResolution(800, 600, false);
 
-        client = new UdpClient();
         serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 7777);
-
-        client.BeginReceive(OnReceive, null);
+        client = new UdpConnection(serverEndPoint.Address, serverEndPoint.Port, this);
 
         ServiceProvider.Instance.AddService<PacketFactory>(new PacketFactory());
 
@@ -41,12 +99,7 @@ public class MyClient : MonoBehaviour
 
     void Update()
     {
-        lock (mainThreadQueue)
-            lock (mainThreadQueue)
-            {
-                while (mainThreadQueue.Count > 0)
-                    mainThreadQueue.Dequeue().Invoke();
-            }
+        client.FlushReceiveData();
 
         if (myID == 0)
             return;
@@ -55,15 +108,53 @@ public class MyClient : MonoBehaviour
             SendPosition(players[myID].transform.position);
 
         SendPing();
+        CheckPacketsToResent();
+        CheckDiscartOfRecivedAndUsed();
+    }
+
+    private void CheckPacketsToResent()
+    {
+        for (int i = 0; i < packetsAwaitingResponce.Count; i++)
+        {
+            PacketAwaitingResponce packet = packetsAwaitingResponce[i];
+
+            if (Time.realtimeSinceStartup - packet.lastTimeSent > 3)
+            {
+                client.Send(packet.data, packet.ipEndPoint);
+
+                packet.lastTimeSent = Time.realtimeSinceStartup;
+            }
+        }
     }
 
     void SendHandshake()
     {
-        Send(PacketFactory.Create(PacketType.Handshake));
+        Send(PacketType.Handshake, null, PacketMetaData.Reliable);
     }
+
     void SendPing()
     {
-        Send(PacketFactory.Create(PacketType.Ping));
+        Send(PacketType.Ping);
+    }
+
+    private void HandleClientLeft(NetworkPacket packet)
+    {
+        players.Remove(BitConverter.ToUInt32(packet.payload));
+    }
+
+    private void HandleReliableMessageSend(NetworkPacket packet, byte[] data)
+    {
+        packetsAwaitingResponce.Add(new PacketAwaitingResponce(
+            packet.packetID,
+            data,
+            packet.ipEndPoint,
+            Time.realtimeSinceStartup
+        ));
+    }
+
+    private void HandleCriticalMessage(NetworkPacket packet, byte[] data)
+    {
+        cryticalPackets.Add(packet);
     }
 
     void SendPosition(Vector3 pos)
@@ -75,87 +166,96 @@ public class MyClient : MonoBehaviour
         Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, payload, 8, 4);
         Buffer.BlockCopy(BitConverter.GetBytes(pos.z), 0, payload, 12, 4);
 
-        Send(PacketFactory.Create(PacketType.Data, payload));
+        Send(PacketType.Data, payload);
     }
 
-    void Send(byte[] data)
+    void Send(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
     {
-        client.Send(data, data.Length, serverEndPoint);
+        (byte[] data, uint packetId) = PacketFactory.Create(type, payload, metaData);
+
+        NetworkPacket packet = new NetworkPacket(
+            type,
+            packetId,
+            metaData,
+            payload,
+            Time.realtimeSinceStartup,
+            (int)myID,
+            null
+        );
+
+        HandleSendMetaData(packet, data);
+
+        SendRaw(data);
     }
 
-    void OnReceive(IAsyncResult result)
+    void SendRaw(byte[] data)
     {
-        byte[] data = client.EndReceive(result, ref serverEndPoint);
+        client.Send(data);
+    }
 
-        if (PacketUtility.CalculateCheckSum(data, 0, sizeof(int) * 2) != PacketUtility.GetCheckSum1(data) ||
-            PacketUtility.CalculateCheckSum(data, 0, sizeof(int)) != PacketUtility.GetCheckSum2(data))
-            return;
-
-        PacketType type = PacketUtility.GetType(data);
-        byte[] payload = PacketUtility.GetPayload(data);
-
-        lock (mainThreadQueue)
+    private void HandleRecivedMetaData(NetworkPacket packet)
+    {
+        foreach (KeyValuePair<PacketMetaData, RecivePacketMetaDataDelegate> strategy in recivingMetaDataStrategy)
         {
-            mainThreadQueue.Enqueue(() =>
-            {
-                switch (type)
-                {
-                    case PacketType.HandshakeResponse:
-                        HandleHandshake(payload);
-                        break;
-
-                    case PacketType.Spawn:
-                        HandleSpawn(payload);
-                        break;
-
-                    case PacketType.Data:
-                        HandleData(payload);
-                        break;
-
-                    case PacketType.Disconnect:
-                        HandleDisconnect(payload);
-                        break;
-                }
-            });
+            if (packet.metaData.HasFlag(strategy.Key))
+                strategy.Value(packet);
         }
-
-        client.BeginReceive(OnReceive, null);
     }
 
-    void HandleHandshake(byte[] payload)
+    private void HandleSendMetaData(NetworkPacket packet, byte[] data)
     {
-        myID = BitConverter.ToUInt32(payload, 0);
+        foreach (KeyValuePair<PacketMetaData, SendPacketMetaDataDelegate> strategy in sendingMetaDataStrategy)
+        {
+            if (packet.metaData.HasFlag(strategy.Key))
+            {
+                strategy.Value(packet, data);
+            }
+        }
+    }
+
+    private void HandleCriticalPacketRecived(NetworkPacket packet)
+    {
+        cryticalPackets.Add(packet);
+    }
+
+    private void HandleReliablePacketRecived(NetworkPacket packet)
+    {
+        Send(PacketType.Acknowledgement, BitConverter.GetBytes(packet.packetID));
+        recivedAndUsedPacket[packet.packetID] = (packet);
+    }
+
+    void HandleHandshake(NetworkPacket networkPacket)
+    {
+        myID = BitConverter.ToUInt32(networkPacket.payload, 0);
         Debug.Log("My ID: " + myID);
 
         SpawnPlayer(myID, Vector3.one * 3);
 
-        if (players.ContainsKey(myID))
-        {
-            SendPosition(players[myID].transform.position);
-        }
+        SendPosition(players[myID].transform.position);
     }
 
-    void HandleSpawn(byte[] payload)
+    void HandleSpawn(NetworkPacket packet)
     {
-        uint id = BitConverter.ToUInt32(payload, 0);
+        uint newUserID = BitConverter.ToUInt32(packet.payload, 0);
 
-        if (players.ContainsKey(id)) return;
+        if (players.ContainsKey(newUserID))
+            return;
 
-        Debug.Log("Spawn player: " + id);
+        Debug.Log("Spawn player: " + newUserID);
 
-        SpawnPlayer(id, Vector3.one * 3);
+        SpawnPlayer(newUserID, Vector3.one * 3);
     }
 
-    void HandleData(byte[] payload)
+    void HandleData(NetworkPacket networkPacket)
     {
-        uint id = BitConverter.ToUInt32(payload, 0);
+        uint id = BitConverter.ToUInt32(networkPacket.payload, 0);
 
         if (id == myID)
             return;
 
-        float x = BitConverter.ToSingle(payload, 4);
-        float y = BitConverter.ToSingle(payload, 8);
-        float z = BitConverter.ToSingle(payload, 12);
+        float x = BitConverter.ToSingle(networkPacket.payload, 4);
+        float y = BitConverter.ToSingle(networkPacket.payload, 8);
+        float z = BitConverter.ToSingle(networkPacket.payload, 12);
 
         if (!players.ContainsKey(id))
             return;
@@ -163,17 +263,12 @@ public class MyClient : MonoBehaviour
         players[id].transform.position = new Vector3(x, y, z);
     }
 
-    void HandleDisconnect(byte[] payload)
+    private void HandleAcknowledgement(NetworkPacket networkPacket)
     {
-        uint id = BitConverter.ToUInt32(payload, 0);
-
-        if (!players.ContainsKey(id)) return;
-
-        Debug.Log("Remove player: " + id);
-
-        Destroy(players[id]);
-        players.Remove(id);
+        uint packetID = BitConverter.ToUInt32(networkPacket.payload, 0);
+        packetsAwaitingResponce.RemoveAll(p => p.packetID == packetID);
     }
+
     void SpawnPlayer(uint id, Vector3 pos)
     {
         GameObject obj = Instantiate(playerPrefab, pos, Quaternion.identity);
@@ -183,7 +278,6 @@ public class MyClient : MonoBehaviour
         if (id == myID)
         {
             obj.GetComponent<Renderer>().material.color = Color.green;
-
             obj.AddComponent<PlayerController>();
         }
         else
@@ -194,7 +288,54 @@ public class MyClient : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        Send(PacketFactory.Create(PacketType.Disconnect));
+        Send(PacketType.ClientLeft);
+
         client.Close();
     }
+
+    public void OnReceiveData(byte[] data, IPEndPoint ipEndpoint)
+    {
+        PacketType type = PacketUtility.GetType(data);
+        uint packetID = PacketUtility.GetPacketID(data);
+        PacketMetaData metaData = PacketUtility.GetMetaData(data);
+        byte[] payload = PacketUtility.GetPayload(data);
+        uint userID = PacketUtility.GetClientID(data);
+
+        NetworkPacket networkPacket = new NetworkPacket(
+            type,
+            packetID,
+            metaData,
+            payload,
+            Time.realtimeSinceStartup,
+            (int)userID,
+            ipEndpoint
+        );
+
+        if (recivedAndUsedPacket.ContainsKey(packetID))
+        {
+            recivedAndUsedPacket[packetID].timeStamp = Time.realtimeSinceStartup;
+            HandleAcknowledgement(networkPacket);
+            return;
+        }
+
+        HandleRecivedMetaData(networkPacket);
+
+        if (packetTypeStrategy.TryGetValue(type, out PacketTypeDelegate handler))
+            handler(networkPacket);
+    }
+
+    void CheckDiscartOfRecivedAndUsed()
+    {
+        List<uint> toRemove = new List<uint>();
+
+        foreach (KeyValuePair<uint, NetworkPacket> networkPacket in recivedAndUsedPacket)
+        {
+            if (Time.realtimeSinceStartup - networkPacket.Value.timeStamp > 10)
+                toRemove.Add(networkPacket.Key);
+        }
+
+        foreach (uint packetID in toRemove)
+            recivedAndUsedPacket.Remove(packetID);
+    }
+
 }

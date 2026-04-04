@@ -67,10 +67,10 @@ namespace ServerArquitecture.src.Server.Packets
 
         public static byte[] GetPayload(byte[] data)
         {
-            int payloadSize = data.Length - (PacketLayout.PacketDataOffSet + sizeof(int) * 2);
+            int payloadSize = data.Length - PacketLayout.PacketConstSpace;
             byte[] payload = new byte[payloadSize];
 
-            Buffer.BlockCopy(data, PacketLayout.PacketDataOffSet, payload, 0, payloadSize);
+            Buffer.BlockCopy(data, PacketLayout.PacketPayloadOffSet, payload, 0, payloadSize);
 
             return payload;
         }

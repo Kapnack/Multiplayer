@@ -8,6 +8,7 @@ namespace KapNet
     {
         Handshake,
         Acknowledgement,
+        SendID,
         ClientJoined,
         ClientLeft,
         Ping,
@@ -32,8 +33,6 @@ namespace KapNet
 
         public bool IsPersistance => true;
 
-        private const int PacketConstSpace = sizeof(PacketType) + sizeof(int) + sizeof(PacketMetaData) + sizeof(int) * 2;
-
         public PacketFactory()
         { }
 
@@ -44,13 +43,13 @@ namespace KapNet
             if (payload == null)
                 payload = new byte[0];
 
-            byte[] data = new byte[PacketConstSpace + payload.Length];
+            byte[] data = new byte[PacketLayout.PacketConstSpace + payload.Length];
 
             BitConverter.GetBytes((int)type).CopyTo(data, PacketLayout.PacketTypeOffSet);
             BitConverter.GetBytes(packetID).CopyTo(data, PacketLayout.PacketIDOffSet);
             BitConverter.GetBytes((int)metaData).CopyTo(data, PacketLayout.PacketMetaDataOffSet);
 
-            Buffer.BlockCopy(payload, 0, data, PacketLayout.PacketDataOffSet, payload.Length);
+            Buffer.BlockCopy(payload, 0, data, PacketLayout.PacketPayloadOffSet, payload.Length);
 
             BitConverter.GetBytes(PacketUtility.CalculateCheckSum(data, 0, PacketLayout.CheckSum1EndOffSet)).CopyTo(data, data.Length - PacketLayout.CheckSum1EndOffSet);
             BitConverter.GetBytes(PacketUtility.CalculateCheckSum(data, 0, PacketLayout.CheckSum2EndOffSet)).CopyTo(data, data.Length - PacketLayout.CheckSum2EndOffSet);

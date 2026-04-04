@@ -7,8 +7,10 @@ namespace ServerArquitecture.src.Server.Packets
         public const int PacketTypeOffSet = 0;
         public const int PacketIDOffSet = sizeof(PacketType);
         public const int PacketMetaDataOffSet = PacketIDOffSet + sizeof(uint);
-        public const int PacketDataOffSet = PacketMetaDataOffSet + sizeof(PacketMetaData);
+        public const int PacketPayloadOffSet = PacketMetaDataOffSet + sizeof(PacketMetaData);
         public const int CheckSum2EndOffSet = sizeof(int);
         public const int CheckSum1EndOffSet = CheckSum2EndOffSet * 2;
+
+        public const int PacketConstSpace = sizeof(PacketType) + sizeof(int) + sizeof(PacketMetaData) + sizeof(int) * 2;
     }
 }

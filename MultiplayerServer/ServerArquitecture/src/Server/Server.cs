@@ -50,7 +50,7 @@ namespace KapNet
 
         private Dictionary<IPEndPoint, ClientData> clients = new Dictionary<IPEndPoint, ClientData>();
 
-        private List<NetworkPacket> recivedAndUsedPacket = new List<NetworkPacket>();
+        private Dictionary<uint, NetworkPacket> recivedAndUsedPacket = new Dictionary<uint, NetworkPacket>();
         private List<PacketAwaitingResponce> packetsAwaitingResponce = new List<PacketAwaitingResponce>();
         private List<NetworkPacket> cryticalPackets = new List<NetworkPacket>();
 
@@ -68,7 +68,7 @@ namespace KapNet
                 { PacketType.Ping, HandlePing },
                 { PacketType.Data, HandleData },
                 { PacketType.ClientLeft, HandleClientLeft },
-                {PacketType.Acknowledgement, HandleAcknowledgement }
+                { PacketType.Acknowledgement, HandleAcknowledgement }
             };
 
             sendingMetaDataStrategy = new Dictionary<PacketMetaData, SendPacketMetaDataDelegate>()
@@ -91,14 +91,14 @@ namespace KapNet
 
         private void HandleAcknowledgement(NetworkPacket networkPacket)
         {
-            int packetID = BitConverter.ToInt32(PacketUtility.GetPayload(networkPacket.payload), 0);
+            uint packetID = BitConverter.ToUInt32(networkPacket.payload, 0);
             packetsAwaitingResponce.RemoveAll(p => p.packetID == packetID);
         }
 
         private void HandleReliablePacketRecived(NetworkPacket packet)
         {
             Send(packet.ipEndPoint, PacketType.Acknowledgement, BitConverter.GetBytes(packet.packetID));
-            recivedAndUsedPacket.Add(packet);
+            recivedAndUsedPacket[packet.packetID] = packet;
         }
 
         public void Init()
@@ -118,6 +118,7 @@ namespace KapNet
             connection?.FlushReceiveData();
             CheckUserTimeouts();
             CheckPacketsToResent();
+            CheckDiscartOfRecivedAndUsed();
         }
 
         void Unload()
@@ -142,7 +143,7 @@ namespace KapNet
             PacketMetaData metaData = PacketUtility.GetMetaData(data);
             byte[] payload = PacketUtility.GetPayload(data);
 
-            NetworkPacket packet = new NetworkPacket(
+            NetworkPacket networkPacket = new NetworkPacket(
                 type,
                 packetID,
                 metaData,
@@ -152,16 +153,17 @@ namespace KapNet
                 ip
             );
 
-            if (recivedAndUsedPacket.Contains(packet))
+            if (recivedAndUsedPacket.ContainsKey(packetID))
             {
-                HandleAcknowledgement(packet);
+                recivedAndUsedPacket[packetID].timeStamp = (float)Time.RealTimeSinceStartUp;
+                HandleAcknowledgement(networkPacket);
                 return;
             }
 
-            HandleRecivedMetaData(packet);
+            HandleRecivedMetaData(networkPacket);
 
-            if (packetTypeStrategy.TryGetValue(packet.type, out PacketTypeDelegate handler))
-                handler(packet);
+            if (packetTypeStrategy.TryGetValue(networkPacket.type, out PacketTypeDelegate handler))
+                handler(networkPacket);
         }
 
         private void HandleRecivedMetaData(NetworkPacket packet)
@@ -220,7 +222,7 @@ namespace KapNet
 
             ServerConsole.Log($"Client connected: {packet.ipEndPoint} ID: {newID}");
 
-            Send(packet.ipEndPoint, PacketType.Acknowledgement, BitConverter.GetBytes(newID), PacketMetaData.Reliable);
+            Send(packet.ipEndPoint, PacketType.SendID, BitConverter.GetBytes(packet.packetID), PacketMetaData.Reliable);
         }
 
         private void HandleClientLeft(NetworkPacket packet)
@@ -325,9 +327,22 @@ namespace KapNet
                     connection.Send(packet.data, packet.ipEndPoint);
 
                     packet.lastTimeSent = Time.RealTimeSinceStartUp;
-                    packetsAwaitingResponce[i] = packet;
                 }
             }
+        }
+
+        void CheckDiscartOfRecivedAndUsed()
+        {
+            List<uint> toRemove = new List<uint>();
+
+            foreach (KeyValuePair<uint, NetworkPacket> networkPacket in recivedAndUsedPacket)
+            {
+                if (Time.RealTimeSinceStartUp - networkPacket.Value.timeStamp > 10)
+                    toRemove.Add(networkPacket.Key);
+            }
+
+            foreach (uint packetID in toRemove)
+                recivedAndUsedPacket.Remove(packetID);
         }
     }
 }

@@ -64,7 +64,7 @@ namespace KapNet
                 DataReceived dataReceived = new DataReceived();
                 dataReceived.data = connection.EndReceive(ar, ref dataReceived.ipEndPoint);
 
-                if (IsValidCheckSum(dataReceived.data))
+                if (!IsValidCheckSum(dataReceived.data))
                 {
                     return;
                 }
