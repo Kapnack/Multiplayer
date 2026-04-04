@@ -153,6 +153,9 @@ namespace KapNet
                 ip
             );
 
+            if (type != PacketType.Ping && type != PacketType.Data)
+                ServerConsole.Log($"[RECEIVED PACKET] {{{Time.RealTimeSinceStartUp}}} Type:\x1B[33m {networkPacket.type}\u001b[0m, PacketID: {networkPacket.packetID}, User: {networkPacket.clientId} {networkPacket.ipEndPoint}");
+
             if (recivedAndUsedPacket.ContainsKey(packetID))
             {
                 recivedAndUsedPacket[packetID].timeStamp = (float)Time.RealTimeSinceStartUp;
@@ -206,23 +209,27 @@ namespace KapNet
             Broadcast(packet.ipEndPoint, PacketType.Data, newPayload, packet.metaData);
         }
 
-        private void HandleHandShake(NetworkPacket packet)
+        private void HandleHandShake(NetworkPacket networkPacket)
         {
-            if (clients.ContainsKey(packet.ipEndPoint))
+            if (clients.ContainsKey(networkPacket.ipEndPoint))
                 return;
 
             ++currentClientID;
             uint newID = currentClientID;
 
-            clients.Add(packet.ipEndPoint, new ClientData
+            clients.Add(networkPacket.ipEndPoint, new ClientData
             {
                 id = newID,
                 lastResponce = Time.RealTimeSinceStartUp
             });
 
-            ServerConsole.Log($"Client connected: {packet.ipEndPoint} ID: {newID}");
+            ServerConsole.Log($"Client connected: {networkPacket.ipEndPoint} ID: {newID}");
 
-            Send(packet.ipEndPoint, PacketType.SendID, BitConverter.GetBytes(packet.packetID), PacketMetaData.Reliable);
+            Send(networkPacket.ipEndPoint, PacketType.SendID, BitConverter.GetBytes(networkPacket.packetID), PacketMetaData.Reliable);
+
+            foreach (KeyValuePair<IPEndPoint, ClientData> it in clients)
+                if (!it.Key.Equals(networkPacket.ipEndPoint))
+                    Send(networkPacket.ipEndPoint, PacketType.ClientJoined, BitConverter.GetBytes(it.Value.id), PacketMetaData.Reliable);
         }
 
         private void HandleClientLeft(NetworkPacket packet)
@@ -249,7 +256,7 @@ namespace KapNet
         {
             (byte[] data, uint packetId) = PacketFactory.Create(type, payload, metaData);
 
-            NetworkPacket packet = new NetworkPacket(
+            NetworkPacket networkPacket = new NetworkPacket(
                 type,
                 packetId,
                 metaData,
@@ -259,7 +266,10 @@ namespace KapNet
                 ip
             );
 
-            HandleSendMetaData(packet, data);
+            if (type != PacketType.Pong && type != PacketType.Data)
+                ServerConsole.Log($"[RECEIVED PACKET] {{{Time.RealTimeSinceStartUp}}} Type:\x1B[33m {networkPacket.type}\u001b[0m, PacketID: {networkPacket.packetID}, User: {networkPacket.clientId} {networkPacket.ipEndPoint}");
+
+            HandleSendMetaData(networkPacket, data);
 
             SendRaw(data, ip);
         }
