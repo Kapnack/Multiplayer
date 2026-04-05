@@ -63,16 +63,16 @@ public class MyClient : MonoBehaviour, IReceiveData
         };
 
         sendingMetaDataStrategy = new Dictionary<PacketMetaData, SendPacketMetaDataDelegate>()
-            {
-                { PacketMetaData.Reliable, HandleReliableMessageSend },
-                { PacketMetaData.Crytical, HandleCriticalMessage }
-            };
+        {
+            { PacketMetaData.Reliable, HandleReliableMessageSend },
+            { PacketMetaData.Crytical, HandleCriticalMessage }
+        };
 
         recivingMetaDataStrategy = new Dictionary<PacketMetaData, RecivePacketMetaDataDelegate>()
-            {
-                {PacketMetaData.Reliable, HandleReliablePacketRecived },
-                {PacketMetaData.Crytical, HandleCriticalPacketRecived }
-            };
+        {
+            {PacketMetaData.Reliable, HandleReliablePacketRecived },
+            {PacketMetaData.Crytical, HandleCriticalPacketRecived }
+        };
     }
 
     private void HandlePong(NetworkPacket networkPacket)
