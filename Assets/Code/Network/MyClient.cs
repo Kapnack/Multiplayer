@@ -4,6 +4,7 @@ using ServerArquitecture.src.Server.Packets;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using UnityEditor;
 using UnityEngine;
 
 public class PacketAwaitingResponce
@@ -47,10 +48,13 @@ public class MyClient : MonoBehaviour, IReceiveData
     private readonly Dictionary<PacketMetaData, SendPacketMetaDataDelegate> sendingMetaDataStrategy;
     private readonly Dictionary<PacketMetaData, RecivePacketMetaDataDelegate> recivingMetaDataStrategy;
 
+    private float lastServerResponce;
+
     public MyClient()
     {
         packetTypeStrategy = new Dictionary<PacketType, PacketTypeDelegate>()
         {
+            { PacketType.Pong, HandlePong },
             { PacketType.Acknowledgement, HandleAcknowledgement },
             { PacketType.Data, HandleData },
             { PacketType.ClientLeft, HandleClientLeft },
@@ -69,6 +73,11 @@ public class MyClient : MonoBehaviour, IReceiveData
                 {PacketMetaData.Reliable, HandleReliablePacketRecived },
                 {PacketMetaData.Crytical, HandleCriticalPacketRecived }
             };
+    }
+
+    private void HandlePong(NetworkPacket networkPacket)
+    {
+        lastServerResponce = networkPacket.timeStamp;
     }
 
     private void HandleID(NetworkPacket networkPacket)
@@ -94,6 +103,8 @@ public class MyClient : MonoBehaviour, IReceiveData
 
         ServiceProvider.Instance.AddService<PacketFactory>(new PacketFactory());
 
+        lastServerResponce = Time.realtimeSinceStartup;
+
         SendHandshake();
     }
 
@@ -104,6 +115,8 @@ public class MyClient : MonoBehaviour, IReceiveData
         CheckPacketsToResent();
         CheckDiscartOfRecivedAndUsed();
 
+        CheckServerIsResponding();
+
         if (myID == 0)
             return;
 
@@ -112,6 +125,16 @@ public class MyClient : MonoBehaviour, IReceiveData
         if (players.ContainsKey(myID))
             SendPosition(players[myID].transform.position);
 
+    }
+
+    private void CheckServerIsResponding()
+    {
+        if (Time.realtimeSinceStartup - lastServerResponce > 10)
+#if UNITY_EDITOR
+            EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
     }
 
     private void CheckPacketsToResent()
@@ -281,7 +304,8 @@ public class MyClient : MonoBehaviour, IReceiveData
 
     void OnApplicationQuit()
     {
-        Send(PacketType.ClientLeft);
+        if (myID != 0)
+            Send(PacketType.ClientLeft);
 
         client.Close();
     }
