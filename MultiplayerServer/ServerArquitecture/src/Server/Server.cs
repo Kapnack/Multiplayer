@@ -156,12 +156,13 @@ namespace KapNet
             if (type != PacketType.Ping && type != PacketType.Data)
                 ServerConsole.Log($"[RECEIVED PACKET] {{{Time.RealTimeSinceStartUp}}} Type:\x1B[33m {networkPacket.type}\u001b[0m, PacketID: {networkPacket.packetID}, User: {networkPacket.clientId} {networkPacket.ipEndPoint}");
 
-            if (recivedAndUsedPacket.ContainsKey(packetID))
-            {
-                recivedAndUsedPacket[packetID].timeStamp = (float)Time.RealTimeSinceStartUp;
-                HandleAcknowledgement(networkPacket);
-                return;
-            }
+            lock (recivedAndUsedPacket)
+                if (recivedAndUsedPacket.ContainsKey(packetID))
+                {
+                    recivedAndUsedPacket[packetID].timeStamp = (float)Time.RealTimeSinceStartUp;
+                    HandleAcknowledgement(networkPacket);
+                    return;
+                }
 
             HandleRecivedMetaData(networkPacket);
 
@@ -217,11 +218,12 @@ namespace KapNet
             ++currentClientID;
             uint newID = currentClientID;
 
-            clients.Add(networkPacket.ipEndPoint, new ClientData
-            {
-                id = newID,
-                lastResponce = Time.RealTimeSinceStartUp
-            });
+            lock (clients)
+                clients.Add(networkPacket.ipEndPoint, new ClientData
+                {
+                    id = newID,
+                    lastResponce = Time.RealTimeSinceStartUp
+                });
 
             ServerConsole.Log($"Client connected: {networkPacket.ipEndPoint} ID: {newID}");
 
@@ -230,6 +232,8 @@ namespace KapNet
             foreach (KeyValuePair<IPEndPoint, ClientData> it in clients)
                 if (!it.Key.Equals(networkPacket.ipEndPoint))
                     Send(networkPacket.ipEndPoint, PacketType.ClientJoined, BitConverter.GetBytes(it.Value.id), PacketMetaData.Reliable);
+
+            Broadcast(networkPacket.ipEndPoint, PacketType.ClientJoined, BitConverter.GetBytes(newID), PacketMetaData.Reliable);
         }
 
         private void HandleClientLeft(NetworkPacket packet)
@@ -334,7 +338,7 @@ namespace KapNet
 
                 if (Time.RealTimeSinceStartUp - packet.lastTimeSent > 3)
                 {
-                    connection.Send(packet.data, packet.ipEndPoint);
+                    SendRaw(packet.data, packet.ipEndPoint);
 
                     packet.lastTimeSent = Time.RealTimeSinceStartUp;
                 }
