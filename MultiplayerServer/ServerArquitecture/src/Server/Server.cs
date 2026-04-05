@@ -120,7 +120,7 @@ namespace KapNet
         public void Tick(float deltaTime)
         {
             connection?.FlushReceiveData();
-            //CheckUserTimeouts();
+            CheckUserTimeouts();
             CheckPacketsToResent();
             CheckDiscartOfRecivedAndUsed();
         }
