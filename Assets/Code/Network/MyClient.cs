@@ -39,7 +39,7 @@ public class MyClient : MonoBehaviour, IReceiveData
 
     PacketFactory PacketFactory => ServiceProvider.Instance.GetService<PacketFactory>();
 
-    private Dictionary<uint, NetworkPacket> recivedAndUsedPacket = new Dictionary<uint, NetworkPacket>();
+    private Dictionary<uint, float> recivedAndUsedPacket = new Dictionary<uint, float>();
     private List<PacketAwaitingResponce> packetsAwaitingResponce = new List<PacketAwaitingResponce>();
     private List<NetworkPacket> cryticalPackets = new List<NetworkPacket>();
 
@@ -141,7 +141,9 @@ public class MyClient : MonoBehaviour, IReceiveData
 
     private void HandleClientLeft(NetworkPacket packet)
     {
-        players.Remove(BitConverter.ToUInt32(packet.payload));
+        uint playerID = BitConverter.ToUInt32(packet.payload);
+        Destroy(players[playerID]);
+        players.Remove(playerID);
     }
 
     private void HandleReliableMessageSend(NetworkPacket packet, byte[] data)
@@ -174,7 +176,7 @@ public class MyClient : MonoBehaviour, IReceiveData
     {
         (byte[] data, uint packetId) = PacketFactory.Create(type, payload, metaData);
 
-        NetworkPacket packet = new NetworkPacket(
+        NetworkPacket networkPacket = new NetworkPacket(
             type,
             packetId,
             metaData,
@@ -184,7 +186,10 @@ public class MyClient : MonoBehaviour, IReceiveData
             null
         );
 
-        HandleSendMetaData(packet, data);
+        if (type != PacketType.Ping && type != PacketType.Data)
+            Debug.Log($"[SENDING PACKET] {{{Time.realtimeSinceStartup}}} Type:{networkPacket.type}, PacketID: {networkPacket.packetID}, User: {networkPacket.clientId} {networkPacket.ipEndPoint}");
+
+        HandleSendMetaData(networkPacket, data);
 
         SendRaw(data);
     }
@@ -222,15 +227,12 @@ public class MyClient : MonoBehaviour, IReceiveData
     private void HandleReliablePacketRecived(NetworkPacket packet)
     {
         Send(PacketType.Acknowledgement, BitConverter.GetBytes(packet.packetID));
-        recivedAndUsedPacket[packet.packetID] = packet;
+        recivedAndUsedPacket[packet.packetID] = Time.realtimeSinceStartup;
     }
 
     void HandleSpawn(NetworkPacket packet)
     {
         uint newUserID = BitConverter.ToUInt32(packet.payload, 0);
-
-        if (players.ContainsKey(newUserID))
-            return;
 
         Debug.Log("Spawn player: " + newUserID);
 
@@ -302,9 +304,12 @@ public class MyClient : MonoBehaviour, IReceiveData
             ipEndpoint
         );
 
+        if (type != PacketType.Pong && type != PacketType.Data)
+            Debug.Log($"[RECIVED PACKET] {{{Time.realtimeSinceStartup}}} Type: {networkPacket.type}, PacketID: {networkPacket.packetID}, User: {networkPacket.clientId} {networkPacket.ipEndPoint}");
+
         if (recivedAndUsedPacket.ContainsKey(packetID))
         {
-            recivedAndUsedPacket[packetID].timeStamp = Time.realtimeSinceStartup;
+            recivedAndUsedPacket[packetID] = (float)Time.realtimeSinceStartup;
             HandleAcknowledgement(networkPacket);
             return;
         }
@@ -319,9 +324,9 @@ public class MyClient : MonoBehaviour, IReceiveData
     {
         List<uint> toRemove = new List<uint>();
 
-        foreach (KeyValuePair<uint, NetworkPacket> networkPacket in recivedAndUsedPacket)
+        foreach (KeyValuePair<uint, float> networkPacket in recivedAndUsedPacket)
         {
-            if (Time.realtimeSinceStartup - networkPacket.Value.timeStamp > 10)
+            if (Time.realtimeSinceStartup - networkPacket.Value > 10)
                 toRemove.Add(networkPacket.Key);
         }
 
