@@ -101,15 +101,17 @@ public class MyClient : MonoBehaviour, IReceiveData
     {
         client.FlushReceiveData();
 
+        CheckPacketsToResent();
+        CheckDiscartOfRecivedAndUsed();
+
         if (myID == 0)
             return;
+
+        SendPing();
 
         if (players.ContainsKey(myID))
             SendPosition(players[myID].transform.position);
 
-        SendPing();
-        CheckPacketsToResent();
-        CheckDiscartOfRecivedAndUsed();
     }
 
     private void CheckPacketsToResent()
