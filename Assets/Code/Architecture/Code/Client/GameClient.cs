@@ -1,13 +1,16 @@
 ﻿using Assets.Code.Architecture.Code.Network;
 using ImageCampus.ToolBox.Dataflow;
+using ImageCampus.ToolBox.Services;
 using KapNet;
 using System;
 
 namespace Assets.Code.Architecture.Code.Client
 {
-    internal class GameClient : IClient, IInitable, IDisposable, ITickable
+    internal class GameClient : IClient, IInitable, IDisposable, ITickable, IService
     {
         private ClientConnection connection;
+
+        public bool IsPersistance => false;
 
         public void Init()
         {
