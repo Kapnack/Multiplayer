@@ -28,5 +28,4 @@ public class MultiplayerArchitecture : IInitable, ITickable, IDisposable
     {
         GameClient.Dispose();
     }
-
 }
