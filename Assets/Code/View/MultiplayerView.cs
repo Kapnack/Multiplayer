@@ -1,0 +1,29 @@
+using UnityEngine;
+
+public class MultiplayerView : MonoBehaviour
+{
+    MultiplayerArchitecture architecture;
+
+    private void Awake()
+    {
+        architecture = new MultiplayerArchitecture();
+
+        architecture.Init();
+    }
+
+    private void Start()
+    {
+        architecture.LateInit();
+    }
+
+    private void Update()
+    {
+        float deltaTime = Time.deltaTime;
+        architecture.Tick(deltaTime);
+    }
+
+    private void OnApplicationQuit()
+    {
+        architecture.Dispose();
+    }
+}

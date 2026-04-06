@@ -1,5 +1,5 @@
 ﻿<Solution>
   <Project Path="TollBox.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="MultiplayerArchitecture.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
 </Solution>

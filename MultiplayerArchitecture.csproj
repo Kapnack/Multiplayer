@@ -49,10 +49,10 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.12f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Code\MultiplayerArchitecture\Code\MultiplayerArchitecture.cs" />
+    <Compile Include="Assets\Code\Architecture\Code\MultiplayerArchitecture.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Code\MultiplayerArchitecture\MultiplayerArchitecture.asmdef" />
+    <None Include="Assets\Code\Architecture\MultiplayerArchitecture.asmdef" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Unity.VisualScripting.YamlDotNet">
