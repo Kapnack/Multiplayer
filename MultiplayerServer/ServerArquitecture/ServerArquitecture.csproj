@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{6E0432E6-003F-4603-85BB-92F6940AA98D}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>ServerArquitecture</RootNamespace>
+    <AssemblyName>ServerArquitecture</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="src\Architecture.cs" />
+    <Compile Include="src\Console\Events\ConsoleErrorEvent.cs" />
+    <Compile Include="src\Console\Events\ConsoleLogEvent.cs" />
+    <Compile Include="src\Console\Events\ConsoleWarningEvent.cs" />
+    <Compile Include="src\Console\ServerConsole.cs" />
+    <Compile Include="src\Server\IReceiveData.cs" />
+    <Compile Include="src\Server\Packets\NetworkPacket.cs" />
+    <Compile Include="src\Server\Packets\PacketFactory.cs" />
+    <Compile Include="src\Server\Packets\PacketLayout.cs" />
+    <Compile Include="src\Server\Packets\PacketUtility.cs" />
+    <Compile Include="src\Server\Server.cs" />
+    <Compile Include="src\Server\UdpConnection.cs" />
+    <Compile Include="src\Time\Time.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ToolBox\ToolBox.csproj">
+      <Project>{4F40BDF1-31F0-45E2-9126-57E31EE97D69}</Project>
+      <Name>ToolBox</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
