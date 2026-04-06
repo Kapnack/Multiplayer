@@ -2,10 +2,10 @@
 {
     public interface IClient
     {
-        void OnHandShake(byte[] payload, uint myID);
-        void OnClienJoined(byte[] payload, uint clientID);
+        void OnHandShake(uint myID);
+        void OnClienJoined(uint clientID);
         void OnPayloadRecieve(byte[] payload, uint clientID);
-        void OnClientLeft(byte[] payload, uint clientID);
+        void OnClientLeft(uint clientID);
         void OnServerShutDown();
     }
 }
