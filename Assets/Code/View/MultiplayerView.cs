@@ -6,6 +6,11 @@ public class MultiplayerView : MonoBehaviour
 
     private void Awake()
     {
+        Application.runInBackground = true;
+
+        Screen.fullScreen = false;
+        Screen.SetResolution(800, 600, false);
+
         architecture = new MultiplayerArchitecture();
 
         architecture.Init();
