@@ -1,5 +1,6 @@
 ﻿using Assets.Code.Architecture.Code.Network;
 using ImageCampus.ToolBox.Dataflow;
+using KapNet;
 using System;
 
 namespace Assets.Code.Architecture.Code.Client
@@ -23,6 +24,11 @@ namespace Assets.Code.Architecture.Code.Client
         public void LateInit()
         {
             connection.LateInit();
+        }
+
+        public void Send(byte[] data, PacketMetaData metadata)
+        {
+            connection.Send(data, metadata);
         }
 
         public void OnClienJoined(uint clientID)
