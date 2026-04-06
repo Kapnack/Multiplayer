@@ -39,17 +39,17 @@ namespace Assets.Code.Architecture.Code.Client
             connection.Send(data, metadata);
         }
 
-        public void OnClienJoined(byte[] payload, uint clientID)
+        public void OnClienJoined(uint clientID)
         {
             players[clientID] = null;
         }
 
-        public void OnClientLeft(byte[] payload, uint clientID)
+        public void OnClientLeft(uint clientID)
         {
             players.Remove(clientID);
         }
 
-        public void OnHandShake(byte[] payload, uint myID)
+        public void OnHandShake(uint myID)
         {
             this.myID = myID;
         }
