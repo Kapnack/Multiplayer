@@ -49,15 +49,8 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.12f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Code\Network\packets\NetworkPacket.cs" />
-    <Compile Include="Assets\Code\Network\packets\PacketLayout.cs" />
-    <Compile Include="Assets\Code\Network\UdpConnection.cs" />
-    <Compile Include="Assets\Code\Network\packets\PacketFactory.cs" />
     <Compile Include="Assets\Code\View\MultiplayerView.cs" />
-    <Compile Include="Assets\Code\Network\packets\PacketUtility.cs" />
     <Compile Include="Assets\Code\PlayerController.cs" />
-    <Compile Include="Assets\Code\Network\interfaces\IRecieveData.cs" />
-    <Compile Include="Assets\Code\Network\MyClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
