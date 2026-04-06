@@ -1,0 +1,14 @@
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\bin\Release\ServerView.exe.config
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\bin\Release\ServerView.exe
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\bin\Release\ServerView.pdb
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\bin\Release\ServerArchitecture.dll
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\bin\Release\ToolBox.dll
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\bin\Release\ServerArchitecture.pdb
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\bin\Release\ServerArchitecture.dll.config
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\bin\Release\ToolBox.pdb
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\bin\Release\ToolBox.dll.config
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\obj\Release\ServerView.csproj.AssemblyReference.cache
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\obj\Release\ServerView.csproj.CoreCompileInputs.cache
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\obj\Release\ServerView.csproj.Up2Date
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\obj\Release\ServerView.exe
+D:\UnityProjects\Multiplayer\MultiplayerServer\ServerView\obj\Release\ServerView.pdb
