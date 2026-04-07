@@ -10,6 +10,7 @@ public class MultiplayerArchitecture : IInitable, ITickable, IDisposable
     public void Init()
     {
         ServiceProvider.Instance.AddService<GameClient>(new GameClient());
+        ServiceProvider.Instance.AddService<EntityFactory>(new EntityFactory());
 
         GameClient.Init();
     }
