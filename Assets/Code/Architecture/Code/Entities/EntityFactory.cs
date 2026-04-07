@@ -13,7 +13,6 @@ internal class EntityFactory : IService
 {
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
     private EntityRegistry EntityRegistry => ServiceProvider.Instance.GetService<EntityRegistry>();
-    private BlueprintBinder BlueprintBinder => ServiceProvider.Instance.GetService<BlueprintBinder>();
 
     public bool IsPersistance => false;
 
@@ -40,7 +39,7 @@ internal class EntityFactory : IService
 
         object newEntity = constructores[typeof(TEntity)].Invoke(new object[] { lastAssignedEntityId });
 
-        registerEntityMethod.Invoke(EntityRegistry, new object[] { });
+        registerEntityMethod.Invoke(EntityRegistry, new object[] { newEntity });
 
         return lastAssignedEntityId;
     }
