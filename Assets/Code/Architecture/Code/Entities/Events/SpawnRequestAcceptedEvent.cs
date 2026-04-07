@@ -8,22 +8,16 @@ namespace Assets.Code.Architecture.Code.Entities.Events
 {
     public struct SpawnRequestAcceptedEvent<EntityType> : IEvent
     {
-        public string blueprintToSpawn;
-        public Coordinate coordinateToSpawn;
-        public string blueprintTable;
+        public uint networkID;
 
         public void Assign(params object[] parameters)
         {
-            blueprintToSpawn = (string)parameters[0];
-            coordinateToSpawn = (Coordinate)parameters[1];
-            blueprintTable = (string)parameters[2];
+            networkID = (uint)parameters[0];
         }
 
         public void Reset()
         {
-            blueprintToSpawn = string.Empty;
-            coordinateToSpawn = default(Coordinate);
-            blueprintTable = default(string);
+            networkID = default(uint);
         }
     }
 

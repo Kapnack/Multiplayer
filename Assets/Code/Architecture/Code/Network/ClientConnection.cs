@@ -112,7 +112,7 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
     private void HandleID(NetworkPacket networkPacket)
     {
-        uint userID = BitConverter.ToUInt32(networkPacket.payload, 0);
+        client.OnHandShake(BitConverter.ToUInt32(networkPacket.payload, 0));
     }
 
     private void CheckServerIsResponding()
