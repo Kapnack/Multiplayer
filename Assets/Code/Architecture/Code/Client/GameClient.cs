@@ -10,12 +10,14 @@ namespace Assets.Code.Architecture.Code.Client
 {
     internal class GameClient : IClient, IInitable, IDisposable, ITickable, IService
     {
+        EntityFactory EntityFactory => ServiceProvider.Instance.GetService<EntityFactory>();
+
         private ClientConnection connection;
         public bool IsPersistance => false;
 
         uint myID = 0;
 
-        Dictionary<uint, Player> players = new Dictionary<uint, Player>();
+        Dictionary<uint, uint> players = new Dictionary<uint, uint>();
 
         public void Init()
         {
@@ -41,7 +43,7 @@ namespace Assets.Code.Architecture.Code.Client
 
         public void OnClienJoined(uint clientID)
         {
-            players[clientID] = null;
+            players[clientID] = EntityFactory.Create<Entity>();
         }
 
         public void OnClientLeft(uint clientID)
