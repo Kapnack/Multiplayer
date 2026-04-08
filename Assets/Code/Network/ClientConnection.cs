@@ -267,7 +267,7 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
     {
         List<uint> toRemove = new List<uint>();
 
-        foreach (var packet in recivedAndUsedPacket)
+        foreach (KeyValuePair<uint, float> packet in recivedAndUsedPacket)
         {
             if (Time.RealTimeSinceStartUp - packet.Value > 10)
                 toRemove.Add(packet.Key);
