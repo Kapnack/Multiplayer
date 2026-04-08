@@ -89,8 +89,6 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
     public void Tick(float deltaTime)
     {
-        Time.Tick();
-
         connection.FlushReceiveData();
 
         CheckPacketsToResent();
@@ -127,7 +125,7 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
     {
         for (int i = 0; i < packetsAwaitingResponce.Count; i++)
         {
-            var packet = packetsAwaitingResponce[i];
+            PacketAwaitingResponce packet = packetsAwaitingResponce[i];
 
             if (Time.RealTimeSinceStartUp - packet.lastTimeSent > 3)
             {
