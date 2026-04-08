@@ -265,7 +265,7 @@ namespace KapNet
             cryticalPackets.Add(packet);
         }
 
-        void Send(IPEndPoint ip, PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
+        void Send(IPEndPoint ip, PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None, int sender = -1)
         {
             (byte[] data, uint packetId) = PacketFactory.Create(type, payload, metaData);
 
@@ -302,12 +302,14 @@ namespace KapNet
 
         void Broadcast(IPEndPoint exception, PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
         {
+            int sender = (int)clients[exception].id;
+
             foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
             {
                 if (client.Key.Equals(exception))
                     continue;
 
-                Send(client.Key, type, payload, metaData);
+                Send(client.Key, type, payload, metaData, sender);
             }
         }
 
