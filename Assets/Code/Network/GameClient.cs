@@ -81,12 +81,17 @@ namespace Assets.Code.Architecture.Code.Client
 
             GameObject goObject = Instantiate(usersPrefabs);
 
+            goObject.transform.position = Vector3.up * 2;
+
             Renderer renderer = goObject.GetComponent<Renderer>();
 
             if (clientID != MyID)
                 renderer.material.color = Color.red;
             else
+            {
+                goObject.AddComponent<PlayerController>();
                 renderer.material.color = Color.green;
+            }
 
 
             entitiesByClient[clientID] = goObject;

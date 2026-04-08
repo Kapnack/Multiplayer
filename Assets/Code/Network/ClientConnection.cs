@@ -35,8 +35,6 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
     private IClient client;
 
-    private bool isDisposed = false;
-
     MultiplayerServer.src.Time Time = new MultiplayerServer.src.Time();
     PacketFactory PacketFactory = new PacketFactory();
 
@@ -100,9 +98,6 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
         CheckServerIsResponding();
 
-        if (isDisposed || connection == null)
-            return;
-
         SendPing();
     }
 
@@ -136,7 +131,7 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
             if (Time.RealTimeSinceStartUp - packet.lastTimeSent > 3)
             {
-                SafeSend(packet.data, packet.ipEndPoint);
+                RawSend(packet.data);
                 packet.lastTimeSent = Time.RealTimeSinceStartUp;
             }
         }
@@ -174,8 +169,6 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
     void Send(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
     {
-        if (isDisposed) return;
-
         (byte[] data, uint packetId) = PacketFactory.Create(type, payload, metaData);
 
         NetworkPacket networkPacket = new NetworkPacket(
@@ -188,30 +181,17 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
         HandleSendMetaData(networkPacket, data);
 
-        SafeSend(data);
+        RawSend(data);
     }
 
-    private void SafeSend(byte[] data, IPEndPoint endpoint = null)
+    private void RawSend(byte[] data)
     {
-        if (isDisposed || connection == null)
-            return;
-
-        try
-        {
-            if (endpoint != null)
-                connection.Send(data, endpoint);
-            else
-                connection.Send(data);
-        }
-        catch (ObjectDisposedException)
-        {
-            isDisposed = true;
-        }
+        connection.Send(data);
     }
 
     private void HandleRecivedMetaData(NetworkPacket packet)
     {
-        foreach (var strategy in recivingMetaDataStrategy)
+        foreach (KeyValuePair<PacketMetaData, RecivePacketMetaDataDelegate> strategy in recivingMetaDataStrategy)
         {
             if (packet.metaData.HasFlag(strategy.Key))
                 strategy.Value(packet);
@@ -256,8 +236,6 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
     public void OnReceiveData(byte[] data, IPEndPoint ipEndpoint)
     {
-        if (isDisposed) return;
-
         PacketType type = PacketUtility.GetType(data);
         uint packetID = PacketUtility.GetPacketID(data);
         PacketMetaData metaData = PacketUtility.GetMetaData(data);
@@ -308,11 +286,6 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
     public void Dispose()
     {
-        if (isDisposed) return;
-
-        isDisposed = true;
-
-        connection?.Close();
-        connection = null;
+        connection.Close();
     }
 }
