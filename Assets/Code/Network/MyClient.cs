@@ -186,11 +186,11 @@ public class MyClient : MonoBehaviour, IReceiveData
 
     void SendPosition(Vector3 pos)
     {
-        byte[] payload = new byte[sizeof(float) * 3];
+        byte[] payload = new byte[12];
 
-        Buffer.BlockCopy(BitConverter.GetBytes(pos.x), 0, payload, 0, sizeof(float));
-        Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, payload, sizeof(float), sizeof(float));
-        Buffer.BlockCopy(BitConverter.GetBytes(pos.z), 0, payload, sizeof(float) * 2, sizeof(float));
+        Buffer.BlockCopy(BitConverter.GetBytes(pos.x), 0, payload, 0, 4);
+        Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, payload, 4, 4);
+        Buffer.BlockCopy(BitConverter.GetBytes(pos.z), 0, payload, 8, 4);
 
         Send(PacketType.Data, payload);
     }
@@ -204,7 +204,9 @@ public class MyClient : MonoBehaviour, IReceiveData
             packetId,
             metaData,
             payload,
-            Time.realtimeSinceStartup
+            Time.realtimeSinceStartup,
+            (int)myID,
+            null
         );
 
         if (type != PacketType.Ping && type != PacketType.Data)
@@ -262,17 +264,19 @@ public class MyClient : MonoBehaviour, IReceiveData
 
     void HandleData(NetworkPacket networkPacket)
     {
-        if (networkPacket.clientId == myID)
+        uint id = BitConverter.ToUInt32(networkPacket.payload, 0);
+
+        if (id == myID)
             return;
 
-        float x = BitConverter.ToSingle(networkPacket.payload, 0);
-        float y = BitConverter.ToSingle(networkPacket.payload, sizeof(float));
-        float z = BitConverter.ToSingle(networkPacket.payload, sizeof(float) * 2);
+        float x = BitConverter.ToSingle(networkPacket.payload, 4);
+        float y = BitConverter.ToSingle(networkPacket.payload, 8);
+        float z = BitConverter.ToSingle(networkPacket.payload, 12);
 
-        if (!players.ContainsKey((uint)networkPacket.clientId))
+        if (!players.ContainsKey(id))
             return;
 
-        players[(uint)networkPacket.clientId].transform.position = new Vector3(x, y, z);
+        players[id].transform.position = new Vector3(x, y, z);
     }
 
     private void HandleAcknowledgement(NetworkPacket networkPacket)
