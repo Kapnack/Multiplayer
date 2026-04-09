@@ -82,10 +82,8 @@ namespace KapNet
             {
                 //ServerConsole.Error("An unexpected error occurred: " + e.Message);
             }
-            finally
-            {
-                connection.BeginReceive(OnReceive, null);
-            }
+
+            connection.BeginReceive(OnReceive, null);
         }
 
         private bool IsValidCheckSum(byte[] data)
