@@ -1,10 +1,10 @@
 <Solution>
-  <Project Path="Architecture/Architecture.csproj" Id="71d53e93-3df3-4f83-9eee-2f052e18098c">
+  <Project Path="ServerArchitecture/ServerArchitecture.csproj" Id="50255e30-296d-4725-9319-ec7811ed5500">
     <BuildDependency Project="ToolBox/ToolBox.csproj" />
   </Project>
-  <Project Path="ToolBox/ToolBox.csproj" Id="09b53b62-1c43-4e6e-931c-a5bc6b189129" />
-  <Project Path="View/View.csproj" Id="2489bddb-4204-4ac5-b0e8-d32cfc2e4846">
-    <BuildDependency Project="Architecture/Architecture.csproj" />
+  <Project Path="ServerView/ServerView.csproj" Id="5dcf6a5d-a902-40b8-84e9-98a443613c1b">
+    <BuildDependency Project="ServerArchitecture/ServerArchitecture.csproj" />
     <BuildDependency Project="ToolBox/ToolBox.csproj" />
   </Project>
+  <Project Path="ToolBox/ToolBox.csproj" Id="591e25ca-26f1-44c2-927e-15ebca53c937" />
 </Solution>
