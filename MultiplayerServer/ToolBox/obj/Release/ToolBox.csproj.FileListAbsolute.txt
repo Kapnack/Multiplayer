@@ -1,0 +1,7 @@
+D:\UnityProjects\Multiplayer\MultiplayerServer\ToolBox\obj\Release\ToolBox.csproj.AssemblyReference.cache
+D:\UnityProjects\Multiplayer\MultiplayerServer\ToolBox\obj\Release\ToolBox.csproj.CoreCompileInputs.cache
+D:\UnityProjects\Multiplayer\MultiplayerServer\ToolBox\obj\Release\ToolBox.pdb
+D:\UnityProjects\Multiplayer\MultiplayerServer\ToolBox\bin\Release\ToolBox.dll.config
+D:\UnityProjects\Multiplayer\MultiplayerServer\ToolBox\bin\Release\ToolBox.dll
+D:\UnityProjects\Multiplayer\MultiplayerServer\ToolBox\bin\Release\ToolBox.pdb
+D:\UnityProjects\Multiplayer\MultiplayerServer\ToolBox\obj\Release\ToolBox.dll
