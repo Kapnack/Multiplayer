@@ -409,10 +409,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1708738997}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d8f8ffe121c10204db497535e845599f, type: 3}
+  m_Script: {fileID: 11500000, guid: 73865f77563debb48a87a5bdb0cd4c5c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Assets.Code.Architecture.Code.Client.GameClient
-  playerPrefab: {fileID: 3521440486679471687, guid: 7415d972fc19cb54fa3069960ac4bb46, type: 3}
+  m_EditorClassIdentifier: Assembly-CSharp::Assets.Code.View
+  usersPrefabs: {fileID: 3521440486679471687, guid: 7415d972fc19cb54fa3069960ac4bb46, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

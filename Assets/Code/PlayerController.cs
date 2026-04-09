@@ -1,3 +1,6 @@
+using Assets.MultiplayerArchitecture.Code.Entities;
+using ImageCampus.ToolBox.Events;
+using ImageCampus.ToolBox.Services;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -6,6 +9,8 @@ public class PlayerController : MonoBehaviour
     private const float aceleration = 15.0f;
 
     private Vector3 velocity;
+
+    EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
     void Update()
     {
@@ -18,6 +23,10 @@ public class PlayerController : MonoBehaviour
 
         velocity -= velocity * (friction * Time.deltaTime);
 
-        transform.position += velocity * Time.deltaTime;
+        if (velocity.magnitude > Mathf.Epsilon || Mathf.Approximately(velocity.magnitude, 0))
+        {
+            Vector3 newPos = transform.position + velocity * Time.deltaTime;
+            EventBus.Raise<PlayerMove>(new Coordinate(newPos.x, newPos.y, newPos.z));
+        }
     }
 }
