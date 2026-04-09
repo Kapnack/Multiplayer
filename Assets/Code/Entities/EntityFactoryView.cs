@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Assets.Code.Entities
 {
-    internal class EntityFactoryView : IInitable, ITickable, IDisposable
+    internal class EntityFactoryView : IInitable, IDisposable
     {
         EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
         GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
@@ -27,11 +27,6 @@ namespace Assets.Code.Entities
         }
 
         public void LateInit()
-        {
-
-        }
-
-        public void Tick(float deltaTime)
         {
 
         }
