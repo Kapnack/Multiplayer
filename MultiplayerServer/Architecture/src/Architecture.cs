@@ -14,22 +14,6 @@ namespace MultiplayerServer.src
         TaskScheduler TaskScheduler => ServiceProvider.Instance.GetService<TaskScheduler>();
         Time Time => ServiceProvider.Instance.GetService<Time>();
 
-        public Architecture(string[] args)
-        {
-            if (args.Length >= 3)
-            {
-                string matchMakingAdress = args[0];
-                int.TryParse(args[1], out int portToConnect);
-                int.TryParse(args[2], out int portToHost);
-
-                server = new Server(matchMakingAdress, portToConnect, portToHost);
-
-                return;
-            }
-
-            server = new Server();
-        }
-
         public void Init()
         {
             ServiceProvider.Instance.AddService<Time>(new Time());
@@ -37,6 +21,7 @@ namespace MultiplayerServer.src
             ServiceProvider.Instance.AddService<EventBus>(new EventBus());
             ServiceProvider.Instance.AddService<PacketFactory>(new PacketFactory());
 
+            server = new Server();
 
             Time.Init();
             server.Init();

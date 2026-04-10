@@ -13,17 +13,17 @@ namespace ServerView.src
 
         Time Time => ServiceProvider.Instance.GetService<Time>();
 
-        public void Run(string[] args)
+        public void Run()
         {
-            Init(args);
+            Init();
             LateInit();
             Tick();
             Dispose();
         }
 
-        void Init(string[] args)
+        void Init()
         {
-            architecture = new Architecture(args);
+            architecture = new Architecture();
             console = new ViewConsole();
 
             architecture.Init();
