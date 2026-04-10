@@ -53,6 +53,7 @@ namespace KapNet
         private Dictionary<IPEndPoint, Dictionary<uint, float>> recivedAndUsedPacket = new Dictionary<IPEndPoint, Dictionary<uint, float>>();
         private List<PacketAwaitingResponce> packetsAwaitingResponce = new List<PacketAwaitingResponce>();
         private List<NetworkPacket> cryticalPackets = new List<NetworkPacket>();
+        private SortedDictionary<uint, NetworkPacket> orderedPackets = new SortedDictionary<uint, NetworkPacket>();
 
         private readonly Dictionary<PacketType, PacketTypeDelegate> packetTypeStrategy;
         private readonly Dictionary<PacketMetaData, SendPacketMetaDataDelegate> sendingMetaDataStrategy;
@@ -80,13 +81,14 @@ namespace KapNet
             recivingMetaDataStrategy = new Dictionary<PacketMetaData, RecivePacketMetaDataDelegate>()
             {
                 {PacketMetaData.Reliable, HandleReliablePacketRecived },
-                {PacketMetaData.Crytical, HandleCriticalPacketRecived }
+                {PacketMetaData.Crytical, HandleOrdenable },
+                {PacketMetaData.Ordenable, HandleOrdenable }
             };
         }
 
-        private void HandleCriticalPacketRecived(NetworkPacket packet)
+        private void HandleOrdenable(NetworkPacket packet)
         {
-            cryticalPackets.Add(packet);
+            orderedPackets[packet.packetID] = packet;
         }
 
         private void HandleAcknowledgement(NetworkPacket networkPacket)
@@ -120,7 +122,7 @@ namespace KapNet
         public void Tick(float deltaTime)
         {
             connection?.FlushReceiveData();
-           // CheckUserTimeouts();
+            CheckUserTimeouts();
             CheckPacketsToResent();
             CheckDiscartOfRecivedAndUsed();
         }
