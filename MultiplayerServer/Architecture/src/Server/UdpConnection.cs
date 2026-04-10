@@ -33,11 +33,16 @@ namespace KapNet
         public UdpConnection(IPAddress ip, int port, IReceiveData receiver = null)
         {
             connection = new UdpClient();
-            connection.Connect(ip, port);
+            Connect(ip, port);
 
             this.receiver = receiver;
 
             connection.BeginReceive(OnReceive, null);
+        }
+
+        public void Connect(IPAddress ip, int port)
+        {
+            connection.Connect(ip, port);
         }
 
         public void Close()
