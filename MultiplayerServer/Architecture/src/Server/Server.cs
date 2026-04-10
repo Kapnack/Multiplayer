@@ -32,6 +32,7 @@ namespace KapNet
         }
     }
 
+
     public class Server : IReceiveData, IInitable, ITickable, IDisposable
     {
         private delegate void PacketTypeDelegate(NetworkPacket networkPacket);
@@ -53,7 +54,8 @@ namespace KapNet
         private Dictionary<IPEndPoint, Dictionary<uint, float>> recivedAndUsedPacket = new Dictionary<IPEndPoint, Dictionary<uint, float>>();
         private List<PacketAwaitingResponce> packetsAwaitingResponce = new List<PacketAwaitingResponce>();
         private List<NetworkPacket> cryticalPackets = new List<NetworkPacket>();
-        private SortedDictionary<uint, NetworkPacket> orderedPackets = new SortedDictionary<uint, NetworkPacket>();
+        private Dictionary<IPEndPoint, SortedDictionary<uint, NetworkPacket>> orderedPackets = new Dictionary<IPEndPoint, SortedDictionary<uint, NetworkPacket>>();
+        private Dictionary<IPEndPoint, uint> nextExpectedPacket = new Dictionary<IPEndPoint, uint>();
 
         private readonly Dictionary<PacketType, PacketTypeDelegate> packetTypeStrategy;
         private readonly Dictionary<PacketMetaData, SendPacketMetaDataDelegate> sendingMetaDataStrategy;
@@ -61,8 +63,42 @@ namespace KapNet
 
         private uint currentClientID = 0;
 
+        internal Server(string matchMakingIP, int portToConnect, int portToHost)
+        {
+            if (portToHost < 0 || matchMakingIP == "" || portToConnect < 0)
+                Environment.Exit(0);
+
+            connection = new UdpConnection(portToHost, this);
+
+            connection.Connect(IPAddress.Parse(matchMakingIP), portToConnect);
+
+            packetTypeStrategy = new Dictionary<PacketType, PacketTypeDelegate>()
+            {
+                { PacketType.Handshake, HandleHandShake },
+                { PacketType.Ping, HandlePing },
+                { PacketType.Data, HandleData },
+                { PacketType.ClientLeft, HandleClientLeft },
+                { PacketType.Acknowledgement, HandleAcknowledgement }
+            };
+
+            sendingMetaDataStrategy = new Dictionary<PacketMetaData, SendPacketMetaDataDelegate>()
+            {
+                { PacketMetaData.Reliable, HandleReliableMessageSend },
+                { PacketMetaData.Crytical, HandleCriticalMessage }
+            };
+
+            recivingMetaDataStrategy = new Dictionary<PacketMetaData, RecivePacketMetaDataDelegate>()
+            {
+                {PacketMetaData.Reliable, HandleReliablePacketRecived },
+                {PacketMetaData.Crytical, HandleOrdenable },
+                {PacketMetaData.Ordenable, HandleOrdenable }
+            };
+        }
+
         internal Server()
         {
+            connection = new UdpConnection(port, this);
+
             packetTypeStrategy = new Dictionary<PacketType, PacketTypeDelegate>()
             {
                 { PacketType.Handshake, HandleHandShake },
@@ -88,7 +124,32 @@ namespace KapNet
 
         private void HandleOrdenable(NetworkPacket packet)
         {
-            orderedPackets[packet.packetID] = packet;
+            if (!orderedPackets.ContainsKey(packet.ipEndPoint))
+            {
+                orderedPackets[packet.ipEndPoint] = new SortedDictionary<uint, NetworkPacket>();
+                nextExpectedPacket[packet.ipEndPoint] = 0;
+            }
+
+            orderedPackets[packet.ipEndPoint][packet.packetID] = packet;
+
+            ProcessOrderedPackets(packet.ipEndPoint);
+        }
+
+        private void ProcessOrderedPackets(IPEndPoint ip)
+        {
+            SortedDictionary<uint, NetworkPacket> buffer = orderedPackets[ip];
+
+            while (buffer.TryGetValue(nextExpectedPacket[ip], out NetworkPacket packet))
+            {
+                buffer.Remove(nextExpectedPacket[ip]);
+
+                if (packetTypeStrategy.TryGetValue(packet.type, out PacketTypeDelegate handler))
+                {
+                    handler(packet);
+                }
+
+                nextExpectedPacket[ip]++;
+            }
         }
 
         private void HandleAcknowledgement(NetworkPacket networkPacket)
@@ -109,7 +170,6 @@ namespace KapNet
 
         public void Init()
         {
-            connection = new UdpConnection(port, this);
             rsa = new RSACryptoServiceProvider();
             publicKey = rsa.ToXmlString(false);
         }

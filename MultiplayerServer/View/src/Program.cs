@@ -6,7 +6,7 @@
         {
             View view = new View();
 
-            view.Run();
+            view.Run(args);
         }
     }
 }
