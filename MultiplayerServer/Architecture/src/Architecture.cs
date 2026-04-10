@@ -10,22 +10,20 @@ namespace MultiplayerServer.src
     public sealed class Architecture : IInitable, IDisposable, ITickable
     {
         private Server server;
-
-        TaskScheduler TaskScheduler => ServiceProvider.Instance.GetService<TaskScheduler>();
         Time Time => ServiceProvider.Instance.GetService<Time>();
 
         public Architecture(string[] args)
         {
-            if (args.Length >= 3)
-            {
-                string matchMakingAdress = args[0];
-                int.TryParse(args[1], out int portToConnect);
-                int.TryParse(args[2], out int portToHost);
-
-                server = new Server(matchMakingAdress, portToConnect, portToHost);
-
-                return;
-            }
+            //if (args.Length >= 3)
+            //{
+            //    string matchMakingAdress = args[0];
+            //    int.TryParse(args[1], out int portToConnect);
+            //    int.TryParse(args[2], out int portToHost);
+            //
+            //    server = new Server(matchMakingAdress, portToConnect, portToHost);
+            //
+            //    return;
+            //}
 
             server = new Server();
         }
@@ -33,10 +31,8 @@ namespace MultiplayerServer.src
         public void Init()
         {
             ServiceProvider.Instance.AddService<Time>(new Time());
-            ServiceProvider.Instance.AddService<TaskScheduler>(new TaskScheduler());
             ServiceProvider.Instance.AddService<EventBus>(new EventBus());
             ServiceProvider.Instance.AddService<PacketFactory>(new PacketFactory());
-
 
             Time.Init();
             server.Init();
@@ -51,7 +47,6 @@ namespace MultiplayerServer.src
         public void Tick(float deltaTime)
         {
             server.Tick(deltaTime);
-            TaskScheduler.Tick(deltaTime);
             Time.Tick();
         }
 
