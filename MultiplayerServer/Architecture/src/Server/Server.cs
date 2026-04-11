@@ -63,6 +63,8 @@ namespace KapNet
 
         private uint currentClientID = 0;
 
+        private bool isConnectedToMatchMaking = false;
+
         internal Server(string matchMakingIP, int portToConnect, int portToHost)
         {
             if (portToHost < 0 || matchMakingIP == "" || portToConnect < 0)
@@ -71,6 +73,8 @@ namespace KapNet
             connection = new UdpConnection(portToHost, this);
 
             connection.Connect(IPAddress.Parse(matchMakingIP), portToConnect);
+
+            isConnectedToMatchMaking = true;
 
             packetTypeStrategy = new Dictionary<PacketType, PacketTypeDelegate>()
             {
@@ -185,6 +189,18 @@ namespace KapNet
             CheckUserTimeouts();
             CheckPacketsToResent();
             CheckDiscartOfRecivedAndUsed();
+
+            if (!isConnectedToMatchMaking)
+                return;
+
+            SendPingToMatchMaker();
+        }
+
+        private void SendPingToMatchMaker()
+        {
+            (byte[] data, uint packetID) = PacketFactory.Create(PacketType.Handshake);
+
+            connection.Send(data);
         }
 
         void Unload()
@@ -268,7 +284,7 @@ namespace KapNet
             if (clients.ContainsKey(ip))
                 clients[ip].lastResponce = Time.RealTimeSinceStartUp;
 
-            Send(ip, PacketType.Pong);
+            Send(ip, PacketType.Ping);
         }
 
         private void HandleData(NetworkPacket packet)
@@ -341,7 +357,7 @@ namespace KapNet
                 ip
             );
 
-            if (type != PacketType.Pong && type != PacketType.Data)
+            if (type != PacketType.Ping && type != PacketType.Data)
                 ServerConsole.Log($"[SENDING PACKET] {{{Time.RealTimeSinceStartUp}}} Type:\x1B[33m {networkPacket.type}\u001b[0m, PacketID: {networkPacket.packetID}, User: {networkPacket.clientId} {networkPacket.ipEndPoint}");
 
             HandleSendMetaData(networkPacket, data);

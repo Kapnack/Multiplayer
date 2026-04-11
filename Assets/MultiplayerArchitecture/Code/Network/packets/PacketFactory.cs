@@ -11,7 +11,6 @@ namespace Assets.MultiplayerArchitecture.Code.Network.packets
         ClientJoined,
         ClientLeft,
         Ping,
-        Pong,
         Data,
         DisconnectClient,
         ServerShutDown

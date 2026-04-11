@@ -53,7 +53,7 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
         packetTypeStrategy = new Dictionary<PacketType, PacketTypeDelegate>()
         {
-            { PacketType.Pong, HandlePong },
+            { PacketType.Ping, HandlePong },
             { PacketType.Acknowledgement, HandleAcknowledgement },
             { PacketType.Data, HandleData },
             { PacketType.ClientLeft, HandleClientLeft },
