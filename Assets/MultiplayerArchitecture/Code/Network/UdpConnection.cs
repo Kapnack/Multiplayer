@@ -17,6 +17,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         private readonly UdpClient connection;
         private IReceiveData receiver = null;
         private Queue<DataReceived> dataReceivedQueue = new Queue<DataReceived>();
+        private bool isRunning = true;
 
         object handler = new object();
 
@@ -41,6 +42,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
         public void Close()
         {
+            isRunning = false;
             connection.Close();
         }
 
@@ -84,7 +86,8 @@ namespace Assets.MultiplayerArchitecture.Code.Network
             }
             finally
             {
-                connection.BeginReceive(OnReceive, null);
+                if (isRunning)
+                    connection.BeginReceive(OnReceive, null);
             }
         }
 
