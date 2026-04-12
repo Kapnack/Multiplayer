@@ -131,7 +131,7 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
             if (time.RealTimeSinceStartUp - packet.lastTimeSent > 3)
             {
-                connection.Send(packet.data, packet.ipEndPoint);
+                connection.Send(packet.data);
 
                 packet.lastTimeSent = time.RealTimeSinceStartUp;
             }
