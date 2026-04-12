@@ -300,6 +300,8 @@ namespace KapNet
 
                     IPEndPoint client = clientQueue.Dequeue();
 
+                    clients.Remove(client);
+
                     Send(client, PacketType.ConnectToServer, payload, PacketMetaData.Reliable);
 
                     newServer.clients.Add(client);
