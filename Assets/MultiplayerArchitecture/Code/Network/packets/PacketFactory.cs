@@ -13,7 +13,8 @@ namespace Assets.MultiplayerArchitecture.Code.Network.packets
         Ping,
         Data,
         DisconnectClient,
-        ServerShutDown
+        ServerShutDown,
+        ConnectToServer
     }
 
     [Flags]
@@ -23,6 +24,12 @@ namespace Assets.MultiplayerArchitecture.Code.Network.packets
         Crytical = 1 << 1,
         Reliable = 1 << 2,
         Encrypted = 1 << 3
+    }
+
+    public enum ConnectionRole : byte
+    {
+        Client = 0,
+        Server = 1
     }
 
     internal class PacketFactory : IService

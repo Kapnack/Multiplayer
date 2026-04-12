@@ -14,26 +14,35 @@ namespace MultiplayerServer.src
 
         public Architecture(string[] args)
         {
-            //if (args.Length >= 3)
-            //{
-            //    string matchMakingAdress = args[0];
-            //    int.TryParse(args[1], out int portToConnect);
-            //    int.TryParse(args[2], out int portToHost);
-            //
-            //    server = new Server(matchMakingAdress, portToConnect, portToHost);
-            //
-            //    return;
-            //}
+            ServiceProvider.Instance.AddService<Time>(new Time());
+            ServiceProvider.Instance.AddService<EventBus>(new EventBus());
+
+            if (args.Length >= 3)
+            {
+                string matchMakingAdress = args[0];
+
+                if (!int.TryParse(args[1], out int portToConnect))
+                {
+                    Console.WriteLine("Invalid portToConnect");
+                    return;
+                }
+
+                if (!int.TryParse(args[2], out int portToHost))
+                {
+                    Console.WriteLine("Invalid portToHost");
+                    return;
+                }
+
+                server = new Server(matchMakingAdress, portToConnect, portToHost);
+            
+                return;
+            }
 
             server = new Server();
         }
 
         public void Init()
         {
-            ServiceProvider.Instance.AddService<Time>(new Time());
-            ServiceProvider.Instance.AddService<EventBus>(new EventBus());
-            ServiceProvider.Instance.AddService<PacketFactory>(new PacketFactory());
-
             Time.Init();
             server.Init();
         }

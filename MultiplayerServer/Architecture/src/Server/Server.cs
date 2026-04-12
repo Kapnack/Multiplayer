@@ -32,7 +32,6 @@ namespace KapNet
         }
     }
 
-
     public class Server : IReceiveData, IInitable, ITickable, IDisposable
     {
         private delegate void PacketTypeDelegate(NetworkPacket networkPacket);
@@ -44,7 +43,10 @@ namespace KapNet
 
         private UdpConnection connection;
         Time Time => ServiceProvider.Instance.GetService<Time>();
-        PacketFactory PacketFactory => ServiceProvider.Instance.GetService<PacketFactory>();
+        PacketFactory PacketFactory = new PacketFactory();
+
+        IPEndPoint matchMakingIP;
+        private double matchMakerLastResponce;
 
         private RSACryptoServiceProvider rsa;
         private string publicKey;
@@ -70,12 +72,6 @@ namespace KapNet
             if (portToHost < 0 || matchMakingIP == "" || portToConnect < 0)
                 Environment.Exit(0);
 
-            connection = new UdpConnection(portToHost, this);
-
-            connection.Connect(IPAddress.Parse(matchMakingIP), portToConnect);
-
-            isConnectedToMatchMaking = true;
-
             packetTypeStrategy = new Dictionary<PacketType, PacketTypeDelegate>()
             {
                 { PacketType.Handshake, HandleHandShake },
@@ -97,6 +93,17 @@ namespace KapNet
                 {PacketMetaData.Crytical, HandleOrdenable },
                 {PacketMetaData.Ordenable, HandleOrdenable }
             };
+
+            connection = new UdpConnection(portToHost, this);
+
+            IPAddress ipAddress = IPAddress.Parse(matchMakingIP);
+            this.matchMakingIP = new IPEndPoint(ipAddress, portToConnect);
+
+            connection.Connect(ipAddress, portToConnect);
+
+            Send(PacketType.Handshake, BitConverter.GetBytes((byte)ConnectionRole.Server), PacketMetaData.Reliable);
+
+            isConnectedToMatchMaking = true;
         }
 
         internal Server()
@@ -194,11 +201,14 @@ namespace KapNet
                 return;
 
             SendPingToMatchMaker();
+
+            if (Time.RealTimeSinceStartUp - matchMakerLastResponce > timeout)
+                isConnectedToMatchMaking = false;
         }
 
         private void SendPingToMatchMaker()
         {
-            (byte[] data, uint packetID) = PacketFactory.Create(PacketType.Handshake);
+            (byte[] data, uint packetID) = PacketFactory.Create(PacketType.Ping);
 
             connection.Send(data);
         }
@@ -279,6 +289,9 @@ namespace KapNet
 
         private void HandlePing(NetworkPacket packet)
         {
+            if (packet.ipEndPoint.Equals(matchMakingIP))
+                matchMakerLastResponce = Time.RealTimeSinceStartUp;
+
             IPEndPoint ip = packet.ipEndPoint;
 
             if (clients.ContainsKey(ip))
@@ -365,9 +378,37 @@ namespace KapNet
             SendRaw(data, ip);
         }
 
-        void SendRaw(byte[] data, IPEndPoint ip)
+        void Send(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
         {
-            connection.Send(data, ip);
+            (byte[] data, uint packetId) = PacketFactory.Create(type, payload, metaData);
+
+            NetworkPacket networkPacket = new NetworkPacket(
+                type,
+                packetId,
+                metaData,
+                payload,
+                (float)Time.RealTimeSinceStartUp
+            );
+
+            if (type != PacketType.Ping && type != PacketType.Data)
+                ServerConsole.Log($"[SENDING PACKET] {{{Time.RealTimeSinceStartUp}}} Type:\x1B[33m {networkPacket.type}\u001b[0m, PacketID: {networkPacket.packetID}, User: {networkPacket.clientId} {networkPacket.ipEndPoint}");
+
+            HandleSendMetaData(networkPacket, data);
+
+            SendRaw(data);
+        }
+
+        void SendRaw(byte[] data, IPEndPoint ip = null)
+        {
+            if (ip == null)
+                connection.Send(data);
+            else
+            {
+                if (ip.Equals(matchMakingIP))
+                    connection.Send(data);
+                else
+                    connection.Send(data, ip);
+            }
         }
 
         void Broadcast(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)

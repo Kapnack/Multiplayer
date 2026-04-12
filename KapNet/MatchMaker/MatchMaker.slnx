@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="MatchMaker/MatchMaker.csproj" Id="39b4c1e4-88a8-453c-a960-501af53b28fe" />
+  <Project Path="MatchMakerView/MatchMakerView.csproj" Id="8e0875d8-8bcf-422d-8ff9-6b75053ba50b" />
+</Solution>

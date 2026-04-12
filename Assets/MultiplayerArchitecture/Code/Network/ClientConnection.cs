@@ -2,7 +2,6 @@ using Assets.MultiplayerArchitecture.Code.Network;
 using Assets.MultiplayerArchitecture.Code.Network.packets;
 using ImageCampus.ToolBox.Dataflow;
 using ImageCampus.ToolBox.Services;
-using MultiplayerServer.src;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -35,7 +34,7 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
     private IClient client;
 
     PacketFactory packetFactory = new PacketFactory();
-    Time time = new Time();
+    MultiplayerServer.src.Time time = new MultiplayerServer.src.Time();
 
     private Dictionary<uint, float> recivedAndUsedPacket = new Dictionary<uint, float>();
     private List<PacketAwaitingResponce> packetsAwaitingResponce = new List<PacketAwaitingResponce>();
@@ -59,6 +58,7 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
             { PacketType.ClientLeft, HandleClientLeft },
             { PacketType.ClientJoined, HandleClientJoined },
             { PacketType.SendID, HandleID },
+            { PacketType.ConnectToServer, HandleServerConnection }
         };
 
         sendingMetaDataStrategy = new Dictionary<PacketMetaData, SendPacketMetaDataDelegate>()
@@ -72,6 +72,39 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
             {PacketMetaData.Reliable, HandleReliablePacketRecived },
             {PacketMetaData.Crytical, HandleCriticalPacketRecived }
         };
+    }
+
+    private void HandleServerConnection(NetworkPacket networkPacket)
+    {
+        byte[] payload = networkPacket.payload;
+
+        byte[] ipBytes = new byte[4];
+        Buffer.BlockCopy(payload, 0, ipBytes, 0, 4);
+
+        byte[] portBytes = new byte[4];
+        Buffer.BlockCopy(payload, 4, portBytes, 0, 4);
+
+        IPAddress ipAddress = new IPAddress(ipBytes);
+        int port = BitConverter.ToInt32(portBytes, 0);
+
+        Send(PacketType.ClientLeft);
+
+        Disconnect();
+
+        packetsAwaitingResponce.Clear();
+        recivedAndUsedPacket.Clear();
+        cryticalPackets.Clear();
+
+        serverEndPoint = new IPEndPoint(ipAddress, port);
+
+        connection = new UdpConnection(ipAddress, port, this);
+
+        SendHandshake();
+    }
+
+    private void Disconnect()
+    {
+        connection.Close();
     }
 
     private void HandlePong(NetworkPacket networkPacket)
@@ -107,7 +140,7 @@ public class ClientConnection : IReceiveData, IInitable, ITickable, IDisposable
 
     void SendHandshake()
     {
-        Send(PacketType.Handshake, null, PacketMetaData.Reliable);
+        Send(PacketType.Handshake, BitConverter.GetBytes((byte)ConnectionRole.Client), PacketMetaData.Reliable);
     }
 
     void SendPing()
