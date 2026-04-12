@@ -36,15 +36,13 @@ namespace Assets.MultiplayerArchitecture.Code.Network.packets
 
         public (byte[] data, uint packetId) Create(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
         {
-            ++packetID;
-
             if (payload == null)
                 payload = new byte[0];
 
             byte[] data = new byte[PacketLayout.PacketConstSpace + payload.Length];
 
             BitConverter.GetBytes((int)type).CopyTo(data, PacketLayout.PacketTypeOffSet);
-            BitConverter.GetBytes(packetID).CopyTo(data, PacketLayout.PacketIDOffSet);
+            BitConverter.GetBytes(++packetID).CopyTo(data, PacketLayout.PacketIDOffSet);
             BitConverter.GetBytes((int)metaData).CopyTo(data, PacketLayout.PacketMetaDataOffSet);
 
             Buffer.BlockCopy(payload, 0, data, PacketLayout.PacketPayloadOffSet, payload.Length);
