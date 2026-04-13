@@ -17,6 +17,7 @@ namespace KapNet
 
         private readonly UdpClient connection;
         private IReceiveData receiver = null;
+        private bool isRunning = true;
         private Queue<DataReceived> dataReceivedQueue = new Queue<DataReceived>();
 
         object handler = new object();
@@ -47,6 +48,7 @@ namespace KapNet
 
         public void Close()
         {
+            isRunning = false;
             connection.Close();
         }
 
@@ -90,7 +92,8 @@ namespace KapNet
             }
             finally
             {
-                connection.BeginReceive(OnReceive, null);
+                if (isRunning)
+                    connection.BeginReceive(OnReceive, null);
             }
         }
 
