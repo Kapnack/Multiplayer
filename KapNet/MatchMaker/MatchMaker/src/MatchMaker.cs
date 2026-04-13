@@ -238,6 +238,28 @@ namespace KapNet
                     return;
                 }
 
+                for (int i = 0; i < servers.Count; ++i)
+                {
+                    ServerInfo info = servers[i];
+
+                    if (info.clients.Count < info.maxPlayers)
+                    {
+                        IPEndPoint clientIP = networkPacket.ipEndPoint;
+
+                        byte[] ipBytes = info.endPoint.Address.GetAddressBytes();
+                        byte[] portBytes = BitConverter.GetBytes(info.port);
+
+                        byte[] payload = new byte[ipBytes.Length + portBytes.Length];
+                        Buffer.BlockCopy(ipBytes, 0, payload, 0, ipBytes.Length);
+                        Buffer.BlockCopy(portBytes, 0, payload, ipBytes.Length, portBytes.Length);
+
+                        info.clients.Add(clientIP);
+
+                        Send(clientIP, PacketType.ConnectToServer, payload, PacketMetaData.Reliable);
+                        break;
+                    }
+                }
+
                 clients[networkPacket.ipEndPoint] = Time.RealTimeSinceStartUp;
 
                 clientQueue.Enqueue(networkPacket.ipEndPoint);
@@ -249,29 +271,6 @@ namespace KapNet
                     CreateServer();
                 else if (AreServersFull())
                     CreateServer();
-                else
-                    for (int i = 0; i < servers.Count; ++i)
-                    {
-                        ServerInfo info = servers[i];
-
-                        if (info.clients.Count < info.maxPlayers)
-                        {
-                            IPEndPoint clientIP = clientQueue.Dequeue();
-
-                            byte[] ipBytes = info.endPoint.Address.GetAddressBytes();
-                            byte[] portBytes = BitConverter.GetBytes(info.port);
-
-                            byte[] payload = new byte[ipBytes.Length + portBytes.Length];
-                            Buffer.BlockCopy(ipBytes, 0, payload, 0, ipBytes.Length);
-                            Buffer.BlockCopy(portBytes, 0, payload, ipBytes.Length, portBytes.Length);
-
-                            info.clients.Add(clientIP);
-
-                            Send(clientIP, PacketType.ConnectToServer, payload, PacketMetaData.Reliable);
-                            break;
-                        }
-                    }
-
             }
             else
             {
