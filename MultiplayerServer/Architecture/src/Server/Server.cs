@@ -99,9 +99,7 @@ namespace KapNet
             IPAddress ipAddress = IPAddress.Parse(matchMakingIP);
             this.matchMakingIP = new IPEndPoint(ipAddress, portToConnect);
 
-            connection.Connect(ipAddress, portToConnect);
-
-            Send(PacketType.Handshake, BitConverter.GetBytes((byte)ConnectionRole.Server), PacketMetaData.Reliable);
+            Send(this.matchMakingIP, PacketType.Handshake, BitConverter.GetBytes((byte)ConnectionRole.Server), PacketMetaData.Reliable);
 
             isConnectedToMatchMaking = true;
         }
@@ -210,7 +208,7 @@ namespace KapNet
         {
             (byte[] data, uint packetID) = PacketFactory.Create(PacketType.Ping);
 
-            connection.Send(data);
+            connection.Send(data, matchMakingIP);
         }
 
         void Unload()
@@ -289,12 +287,11 @@ namespace KapNet
 
         private void HandlePing(NetworkPacket packet)
         {
-            if (packet.ipEndPoint.Equals(matchMakingIP))
-                matchMakerLastResponce = Time.RealTimeSinceStartUp;
-
             IPEndPoint ip = packet.ipEndPoint;
 
-            if (clients.ContainsKey(ip))
+            if (ip.Equals(matchMakingIP))
+                matchMakerLastResponce = Time.RealTimeSinceStartUp;
+            else if (clients.ContainsKey(ip))
                 clients[ip].lastResponce = Time.RealTimeSinceStartUp;
 
             Send(ip, PacketType.Ping);
@@ -378,37 +375,9 @@ namespace KapNet
             SendRaw(data, ip);
         }
 
-        void Send(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
+        void SendRaw(byte[] data, IPEndPoint ip)
         {
-            (byte[] data, uint packetId) = PacketFactory.Create(type, payload, metaData);
-
-            NetworkPacket networkPacket = new NetworkPacket(
-                type,
-                packetId,
-                metaData,
-                payload,
-                (float)Time.RealTimeSinceStartUp
-            );
-
-            if (type != PacketType.Ping && type != PacketType.Data)
-                ServerConsole.Log($"[SENDING PACKET] {{{Time.RealTimeSinceStartUp}}} Type:\x1B[33m {networkPacket.type}\u001b[0m, PacketID: {networkPacket.packetID}, User: {networkPacket.clientId} {networkPacket.ipEndPoint}");
-
-            HandleSendMetaData(networkPacket, data);
-
-            SendRaw(data);
-        }
-
-        void SendRaw(byte[] data, IPEndPoint ip = null)
-        {
-            if (ip == null)
-                connection.Send(data);
-            else
-            {
-                if (ip.Equals(matchMakingIP))
-                    connection.Send(data);
-                else
-                    connection.Send(data, ip);
-            }
+            connection.Send(data, ip);
         }
 
         void Broadcast(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
