@@ -17,6 +17,8 @@ namespace Assets.Code
         {
             Application.runInBackground = true;
 
+            Screen.SetResolution(800, 600, false);
+
             multiplayerArchitecture = new Multiplayer.Arch.MultiplayerArchitecture();
 
             ServiceProvider.Instance.AddService<EntityRegistryView>(new EntityRegistryView());
