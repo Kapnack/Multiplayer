@@ -12,8 +12,6 @@ namespace ServerView.src
 
         private bool running = true;
 
-        MultiplayerServer.src.Time Time => ServiceProvider.Instance.GetService<MultiplayerServer.src.Time>();
-
         public void Run()
         {
             Init();

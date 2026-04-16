@@ -12,3 +12,4 @@ D:\UnityProjects\Multiplayer\MultiplayerServer\View\obj\Debug\View.csproj.CoreCo
 D:\UnityProjects\Multiplayer\MultiplayerServer\View\obj\Debug\View.csproj.Up2Date
 D:\UnityProjects\Multiplayer\MultiplayerServer\View\obj\Debug\View.exe
 D:\UnityProjects\Multiplayer\MultiplayerServer\View\obj\Debug\View.pdb
+D:\UnityProjects\Multiplayer\MultiplayerServer\View\bin\Debug\KapNet.dll

@@ -1,0 +1,7 @@
+D:\UnityProjects\Multiplayer\KapNet\KapNet\KapNet\bin\Debug\KapNet.dll.config
+D:\UnityProjects\Multiplayer\KapNet\KapNet\KapNet\bin\Debug\KapNet.dll
+D:\UnityProjects\Multiplayer\KapNet\KapNet\KapNet\bin\Debug\KapNet.pdb
+D:\UnityProjects\Multiplayer\KapNet\KapNet\KapNet\obj\Debug\KapNet.csproj.AssemblyReference.cache
+D:\UnityProjects\Multiplayer\KapNet\KapNet\KapNet\obj\Debug\KapNet.csproj.CoreCompileInputs.cache
+D:\UnityProjects\Multiplayer\KapNet\KapNet\KapNet\obj\Debug\KapNet.dll
+D:\UnityProjects\Multiplayer\KapNet\KapNet\KapNet\obj\Debug\KapNet.pdb

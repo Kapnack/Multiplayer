@@ -1,9 +1,9 @@
 ﻿using Assets.MultiplayerArchitecture.Code.Entities;
 using Assets.MultiplayerArchitecture.Code.Entities.Events;
-using Assets.MultiplayerArchitecture.Code.Network.packets;
 using ImageCampus.ToolBox.Dataflow;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
+using KapNet;
 using System;
 using System.Collections.Generic;
 
@@ -41,7 +41,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
         public void Send(byte[] data, PacketMetaData metadata = PacketMetaData.None)
         {
-            connection.Send(data, metadata);
+            connection.Send(PacketType.Data, data, metadata);
         }
 
         public void OnClienJoined(uint clientID)

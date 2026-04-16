@@ -22,6 +22,20 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
         private void OnPlayerMove(in PlayerMove playerMove)
         {
             EntityRegistry[GameClient[GameClient.MyID]].coordinate = playerMove.coordinate;
+
+            if (GameClient.MyID == 0)
+                return;
+
+            Coordinate currentPos = EntityRegistry[GameClient[GameClient.MyID]].coordinate;
+
+            byte[] payload = new byte[sizeof(uint) + sizeof(float) * 3];
+
+            BitConverter.GetBytes(GameClient.MyID).CopyTo(payload, 0);
+            BitConverter.GetBytes(currentPos.x).CopyTo(payload, sizeof(uint));
+            BitConverter.GetBytes(currentPos.y).CopyTo(payload, sizeof(uint) + sizeof(float));
+            BitConverter.GetBytes(currentPos.z).CopyTo(payload, sizeof(uint) + sizeof(float) * 2);
+
+            GameClient.Send(payload);
         }
 
         public void LateInit()
@@ -31,18 +45,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
         public void Tick(float deltaTime)
         {
-            if (GameClient.MyID == 0)
-                return;
 
-            Coordinate currentPos = EntityRegistry[GameClient[GameClient.MyID]].coordinate;
-
-            byte[] payload = new byte[sizeof(float) * 3];
-
-            BitConverter.GetBytes(currentPos.x).CopyTo(payload, 0);
-            BitConverter.GetBytes(currentPos.y).CopyTo(payload, sizeof(float));
-            BitConverter.GetBytes(currentPos.z).CopyTo(payload, sizeof(float) * 2);
-
-            GameClient.Send(payload);
         }
 
         private void OnEntityMove(in NetworkClientMove networkClientMove)
