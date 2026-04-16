@@ -116,6 +116,7 @@ namespace KapNet
             {
                 Send(networkPacket.ipEndPoint, PacketType.Handshake, BitConverter.GetBytes(clients[networkPacket.ipEndPoint].id), PacketMetaData.Reliable);
                 clients[networkPacket.ipEndPoint].isConnected = true;
+                clients[networkPacket.ipEndPoint].lastResponce = Time.RealTimeSinceStartUp;
                 return;
             }
 
@@ -194,8 +195,9 @@ namespace KapNet
 
             foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
             {
-                if (Time.RealTimeSinceStartUp - client.Value.lastResponce > timeout)
-                    toRemove.Add(client.Key);
+                if (client.Value.isConnected)
+                    if (Time.RealTimeSinceStartUp - client.Value.lastResponce > timeout)
+                        toRemove.Add(client.Key);
             }
 
             foreach (IPEndPoint ip in toRemove)

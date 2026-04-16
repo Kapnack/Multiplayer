@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace KapNet
 {
@@ -18,13 +19,16 @@ namespace KapNet
         private bool isRunning = true;
         private Queue<DataReceived> dataReceivedQueue = new Queue<DataReceived>();
 
+        Thread recieveData;
+
         public UdpConnection(int port, IReceiveData receiver = null)
         {
             connection = new UdpClient(port);
 
             this.receiver = receiver;
 
-            connection.BeginReceive(OnReceive, null);
+            recieveData = new Thread(StartReceiveLoop);
+            recieveData.Start();
         }
 
         public UdpConnection(IPAddress ip, int port, IReceiveData receiver = null)
@@ -34,10 +38,11 @@ namespace KapNet
 
             this.receiver = receiver;
 
-            connection.BeginReceive(OnReceive, null);
+            recieveData = new Thread(StartReceiveLoop);
+            recieveData.Start();
         }
 
-        public void Connect(IPAddress ip, int port)
+        private void Connect(IPAddress ip, int port)
         {
             connection.Connect(ip, port);
         }
@@ -45,6 +50,7 @@ namespace KapNet
         public void Close()
         {
             isRunning = false;
+            recieveData.Abort();
             connection.Close();
         }
 
@@ -61,35 +67,34 @@ namespace KapNet
             }
         }
 
-        void OnReceive(IAsyncResult ar)
+        public async void StartReceiveLoop()
         {
-            try
+            while (isRunning)
             {
-                DataReceived dataReceived = new DataReceived();
-                dataReceived.data = connection.EndReceive(ar, ref dataReceived.ipEndPoint);
-
-                if (!IsValidCheckSum(dataReceived.data))
+                try
                 {
-                    return;
-                }
+                    UdpReceiveResult result = await connection.ReceiveAsync();
 
-                lock (dataReceivedQueue)
-                {
-                    dataReceivedQueue.Enqueue(dataReceived);
+                    if (!IsValidCheckSum(result.Buffer))
+                        continue;
+
+                    lock (dataReceivedQueue)
+                    {
+                        dataReceivedQueue.Enqueue(new DataReceived
+                        {
+                            data = result.Buffer,
+                            ipEndPoint = result.RemoteEndPoint
+                        });
+                    }
                 }
-            }
-            catch (SocketException e)
-            {
-                
-            }
-            catch (Exception e)
-            {
-               
-            }
-            finally
-            {
-                if (isRunning)
-                    connection.BeginReceive(OnReceive, null);
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
+                catch (Exception)
+                {
+                    break;
+                }
             }
         }
 
