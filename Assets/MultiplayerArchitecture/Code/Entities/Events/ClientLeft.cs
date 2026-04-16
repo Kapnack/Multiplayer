@@ -4,8 +4,8 @@ namespace Assets.MultiplayerArchitecture.Code.Entities.Events
 {
     public struct ClientLeft : IEvent
     {
-        uint networkID;
-        uint objectID;
+        public uint networkID;
+        public uint objectID;
 
         public void Assign(params object[] parameters)
         {

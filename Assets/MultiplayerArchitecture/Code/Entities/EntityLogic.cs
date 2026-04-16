@@ -17,6 +17,12 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
         {
             EventBus.Subscribe<NetworkClientMove>(OnEntityMove);
             EventBus.Subscribe<PlayerMove>(OnPlayerMove);
+            EventBus.Subscribe<ClientLeft>(OnClientLeft);
+        }
+
+        private void OnClientLeft(in ClientLeft clientLeft)
+        {
+            EntityRegistry.Remove(clientLeft.objectID);
         }
 
         private void OnPlayerMove(in PlayerMove playerMove)
@@ -57,6 +63,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
         {
             EventBus.Unsubscribe<NetworkClientMove>(OnEntityMove);
             EventBus.Unsubscribe<PlayerMove>(OnPlayerMove);
+            EventBus.Unsubscribe<ClientLeft>(OnClientLeft);
         }
     }
 }

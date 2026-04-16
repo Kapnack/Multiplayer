@@ -19,11 +19,18 @@ namespace Assets.Code.Entities
         {
             EventBus.Subscribe<NetworkClientMove>(OnEntityMove);
             EventBus.Subscribe<PlayerMove>(OnPlayerMove);
+            EventBus.Subscribe<ClientLeft>(OnClientLeft);
         }
+
 
         public void LateInit()
         {
 
+        }
+        private void OnClientLeft(in ClientLeft callback)
+        {
+            UnityEngine.Object.Destroy(EntityRegistryView[callback.objectID].gameObject);
+            EntityRegistryView.Remove(GameClient[callback.networkID]);
         }
 
         private void OnEntityMove(in NetworkClientMove networkClientMove)
@@ -40,6 +47,7 @@ namespace Assets.Code.Entities
         {
             EventBus.Unsubscribe<NetworkClientMove>(OnEntityMove);
             EventBus.Unsubscribe<PlayerMove>(OnPlayerMove);
+            EventBus.Unsubscribe<ClientLeft>(OnClientLeft);
         }
     }
 }

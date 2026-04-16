@@ -15,5 +15,10 @@ namespace Assets.Code.Entities
         {
             entities[entityID] = entityView;
         }
+
+        public void Remove(uint entityID)
+        {
+            entities.Remove(entityID);
+        }
     }
 }
