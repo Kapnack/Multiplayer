@@ -98,38 +98,6 @@ public class UdpConnection
         }
     }
 
-    //void OnReceive(IAsyncResult ar)
-    //{
-    //    try
-    //    {
-    //        DataReceived dataReceived = new DataReceived();
-    //        dataReceived.data = connection.EndReceive(ar, ref dataReceived.ipEndPoint);
-    //
-    //        if (!IsValidCheckSum(dataReceived.data))
-    //        {
-    //            return;
-    //        }
-    //
-    //        lock (dataReceivedQueue)
-    //        {
-    //            dataReceivedQueue.Enqueue(dataReceived);
-    //        }
-    //    }
-    //    catch (SocketException e)
-    //    {
-    //        
-    //    }
-    //    catch (Exception e)
-    //    {
-    //       
-    //    }
-    //    finally
-    //    {
-    //        if (isRunning)
-    //            connection.BeginReceive(OnReceive, null);
-    //    }
-    //}
-
     private bool IsValidCheckSum(byte[] data)
     {
         return PacketUtility.CalculateCheckSum(data, 0, 8) == PacketUtility.GetCheckSum1(data) && PacketUtility.CalculateCheckSum(data, 0, 4) == PacketUtility.GetCheckSum2(data);
