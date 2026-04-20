@@ -1,5 +1,8 @@
 ﻿using Assets.Code.Entities;
+using Assets.Code.Scenes;
 using ImageCampus.ToolBox.Services;
+using Multiplayer.Arch;
+using MultiplayerArchitecture.Code.Scenes;
 using UnityEngine;
 
 namespace Assets.Code
@@ -7,48 +10,39 @@ namespace Assets.Code
     public class View : MonoBehaviour
     {
         private Multiplayer.Arch.MultiplayerArchitecture multiplayerArchitecture;
-        private EntityFactoryView entityFactoryView;
-
-        private EntityLogicView entityLogicView;
+        private BaseScene currentScene;
 
         [SerializeField] private GameObject usersPrefabs;
+        [SerializeField] private Camera cam;
 
         private void Awake()
         {
             Application.runInBackground = true;
-
             Screen.SetResolution(800, 600, false);
 
             multiplayerArchitecture = new Multiplayer.Arch.MultiplayerArchitecture();
-
-            ServiceProvider.Instance.AddService<EntityRegistryView>(new EntityRegistryView());
-            entityFactoryView = new EntityFactoryView(usersPrefabs);
-            entityLogicView = new EntityLogicView();
+            currentScene = new GameplayViewScene();
 
             multiplayerArchitecture.Init();
-            entityFactoryView.Init();
-            entityLogicView.Init();
+            currentScene.Init(usersPrefabs, cam);
         }
 
         private void Start()
         {
             multiplayerArchitecture.LateInit();
-            entityFactoryView.LateInit();
-            entityLogicView.LateInit();
+            currentScene.LateInit();
         }
 
         private void Update()
         {
             float deltaTime = Time.deltaTime;
             multiplayerArchitecture.Tick(deltaTime);
+            currentScene.Tick(deltaTime);
         }
 
         private void OnApplicationQuit()
         {
-            entityLogicView.Dispose();
-            entityFactoryView.Dispose();
-            multiplayerArchitecture.Dispose();
-            ServiceProvider.Instance.ClearAllServices();
+            currentScene.Dispose();
         }
     }
 }
