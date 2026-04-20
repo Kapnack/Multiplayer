@@ -15,10 +15,12 @@ namespace Assets.Code.Entities
         EntityRegistryView EntityRegistryView => ServiceProvider.Instance.GetService<EntityRegistryView>();
 
         private GameObject usersPrefab;
+        private Camera camera;
 
-        public EntityFactoryView(GameObject usersPrefab)
+        public EntityFactoryView(GameObject usersPrefab, Camera camera)
         {
             this.usersPrefab = usersPrefab;
+            this.camera = camera;
         }
 
         public void Init()
@@ -41,12 +43,22 @@ namespace Assets.Code.Entities
 
             EntityRegistryView.OnEntityCreated(entityCreated.objectID, entityView);
 
-            Renderer renderer = gameObject.GetComponent<Renderer>();
+            gameObject.AddComponent<Rigidbody>();
+
+            Rigidbody rigidbody = gameObject.GetComponent<Rigidbody>();
+
+            rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+
+            Renderer renderer = gameObject.GetComponentInChildren<Renderer>();
 
             if (GameClient.MyID == entityCreated.networkClientID)
             {
                 renderer.material.color = Color.green;
                 gameObject.AddComponent<PlayerController>();
+                camera.transform.parent = gameObject.transform;
+
+                camera.transform.localPosition = new Vector3(0, 5, -10);
+                camera.transform.LookAt(gameObject.transform);
             }
             else
             {
