@@ -51,7 +51,7 @@ namespace KapNet
 
         public static uint GetClientID(byte[] data)
         {
-            return BitConverter.ToUInt32(data, PacketLayout.PacketMetaDataOffSet);
+            return BitConverter.ToUInt32(data, PacketLayout.PacketIDOffSet);
         }
 
         public static int GetCheckSum1(byte[] data)

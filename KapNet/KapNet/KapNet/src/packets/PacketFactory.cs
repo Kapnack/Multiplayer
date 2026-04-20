@@ -10,7 +10,7 @@ namespace KapNet
         public PacketFactory()
         { }
 
-        public (byte[] data, uint packetId) Create(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
+        public (byte[] data, uint packetId) Create(PacketType type, uint clientID = 0, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
         {
             if (!packetTypeID.ContainsKey(type))
                 packetTypeID.Add(type, 0);
@@ -23,6 +23,7 @@ namespace KapNet
             BitConverter.GetBytes((int)type).CopyTo(data, PacketLayout.PacketTypeOffSet);
             BitConverter.GetBytes(++packetTypeID[type]).CopyTo(data, PacketLayout.PacketIDOffSet);
             BitConverter.GetBytes((int)metaData).CopyTo(data, PacketLayout.PacketMetaDataOffSet);
+            BitConverter.GetBytes(clientID).CopyTo(data, PacketLayout.PacketClientIDOffSet);
 
             Buffer.BlockCopy(payload, 0, data, PacketLayout.PacketPayloadOffSet, payload.Length);
 
