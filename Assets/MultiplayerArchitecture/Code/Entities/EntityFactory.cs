@@ -16,7 +16,9 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
         {
            ++currentEntityID;
 
-            EntityRegistry.Add(new Entity(currentEntityID, networkID));
+            Entity newEntity = new Entity(currentEntityID, networkID);
+
+            EntityRegistry.Add(newEntity);
 
             EventBus.Raise<EntityCreated>(networkID, currentEntityID);
 
