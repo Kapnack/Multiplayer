@@ -46,13 +46,12 @@ namespace KapNet.src
             packetsAwaitingResponce[packetType].Add(packet);
         }
 
-        public void Add(PacketType packetType, uint packetID, byte[] data, double RealTimeSinceStartUp, IPEndPoint reciver = null)
+        public void Add(byte[] data, double RealTimeSinceStartUp, IPEndPoint reciver = null)
         {
             if (!packetsAwaitingResponce.ContainsKey(packetType))
                 packetsAwaitingResponce[packetType] = new List<PacketAwaitingResponce>();
 
             packetsAwaitingResponce[packetType].Add(new PacketAwaitingResponce(
-              packetID,
               data,
               reciver,
               RealTimeSinceStartUp

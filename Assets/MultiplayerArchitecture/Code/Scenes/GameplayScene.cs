@@ -1,11 +1,13 @@
 ﻿using Assets.MultiplayerArchitecture.Code.Entities;
 using Assets.MultiplayerArchitecture.Code.Network;
+using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 
 namespace MultiplayerArchitecture.Code.Scenes
 {
     internal class GameplayScene : BaseScene
     {
+        EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
         GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
         EntityLogic entityLogic;
 
@@ -15,7 +17,7 @@ namespace MultiplayerArchitecture.Code.Scenes
             ServiceProvider.Instance.AddService<EntityRegistry>(new EntityRegistry());
             ServiceProvider.Instance.AddService<EntityFactory>(new EntityFactory());
 
-            entityLogic = new EntityLogic();
+            entityLogic = new EntityLogic(); 
 
             GameClient.Init();
             entityLogic.Init();

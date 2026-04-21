@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private float acceleration = 20.0f;
     [SerializeField] private float maxSpeed = 20.0f;
-    [SerializeField] private float turnSpeed = 120.0f;
+    [SerializeField] private float turnSpeed = 150.0f;
     [SerializeField] private float drag = 0f;
 
     private Rigidbody rb;

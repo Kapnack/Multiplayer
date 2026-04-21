@@ -31,8 +31,6 @@ namespace KapNet.src
 
         private UdpConnection connection;
 
-        protected Time Time = new Time();
-
         public NetworkPeer()
         {
             packetResender = new PacketResender(this);
@@ -113,7 +111,6 @@ namespace KapNet.src
             PacketType type = PacketUtility.GetType(data);
             uint packetID = PacketUtility.GetPacketID(data);
             PacketMetaData metaData = PacketUtility.GetMetaData(data);
-            uint clientID = PacketUtility.GetClientID(data);
             byte[] payload = PacketUtility.GetPayload(data);
 
             NetworkPacket networkPacket = new NetworkPacket
@@ -124,17 +121,9 @@ namespace KapNet.src
                 metaData,
                 payload,
                 (float)Time.RealTimeSinceStartUp,
-                clientID,
+                NULL_NETWORKPEER,
                 ipEndpoint
             );
-
-            ClientKey clientKey = typeof(ClientKey) == typeof(IPEndPoint) ? (ClientKey)(object)networkPacket.ipEndPoint : (ClientKey)(object)networkPacket.clientId;
-
-            if (packectsUsedRegistry.ContainsPacket(clientKey, type, packetID))
-            {
-                HandleReliablePacketRecived(networkPacket);
-                return;
-            }
 
             if (!HandleRecivedMetaData(networkPacket))
                 return;
@@ -143,7 +132,7 @@ namespace KapNet.src
                 handler(networkPacket);
         }
 
-        public void Send(IPEndPoint ip, PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None, uint networkID = NULL_NETWORKPEER)
+        public void Send(IPEndPoint ip, PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
         {
             (byte[] data, uint packetId) = packetFactory.Create(type, networkID, payload, metaData);
 
@@ -164,9 +153,9 @@ namespace KapNet.src
             SendRaw(data, ip);
         }
 
-        public void Send(PacketType type, byte[] payload = null, uint networkID = NULL_NETWORKPEER, PacketMetaData metaData = PacketMetaData.None)
+        public void Send(PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
         {
-            (byte[] data, uint packetId) = packetFactory.Create(type, networkID, payload, metaData);
+            (byte[] data, uint packetId) = packetFactory.Create(type, payload, metaData);
 
             NetworkPacket networkPacket = new NetworkPacket
             (
@@ -237,7 +226,7 @@ namespace KapNet.src
 
         private void HandleReliableMessageSend(NetworkPacket networkPacket)
         {
-            packetResender.Add(networkPacket.type, networkPacket.packetID, networkPacket.data, Time.RealTimeSinceStartUp, networkPacket.ipEndPoint);
+            packetResender.Add(networkPacket.data, Time.RealTimeSinceStartUp, networkPacket.ipEndPoint);
         }
 
         private void HandleCriticalMessageSend(NetworkPacket packet)
@@ -247,6 +236,8 @@ namespace KapNet.src
 
         private bool HandleReliablePacketRecived(NetworkPacket networkPacket)
         {
+            uint clientID = BitConverter.ToUInt32(networkPacket.payload);
+
             byte[] payload = new byte[sizeof(PacketType) + sizeof(uint)];
 
             BitConverter.GetBytes((int)networkPacket.type).CopyTo(payload, 0);
@@ -257,8 +248,13 @@ namespace KapNet.src
             else
                 Send(networkPacket.ipEndPoint, PacketType.Acknowledgement, payload);
 
-            ClientKey clientKey = typeof(ClientKey) == typeof(IPEndPoint) ? (ClientKey)(object)networkPacket.ipEndPoint : (ClientKey)(object)networkPacket.clientId;
+            ClientKey clientKey = typeof(ClientKey) == typeof(IPEndPoint) ? (ClientKey)(object)networkPacket.ipEndPoint : (ClientKey)(object)clientID;
 
+            if (packectsUsedRegistry.ContainsPacket(clientKey, networkPacket.type, networkPacket.packetId))
+            {
+                packectsUsedRegistry
+            }
+            else
             packectsUsedRegistry.SetPacket(clientKey, networkPacket.type, networkPacket.packetID, Time.RealTimeSinceStartUp);
 
             return true;
