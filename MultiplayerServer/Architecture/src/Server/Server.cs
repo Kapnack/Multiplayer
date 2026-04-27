@@ -75,7 +75,7 @@ namespace KapNet
 
         private void SendPingToMatchMaker()
         {
-            Send(matchMakingIP, PacketType.Ping, BitConverter.GetBytes(Time.RealTimeSinceStartUp));
+            Send(matchMakingIP, PacketType.Ping, BitConverter.GetBytes(DateTime.UtcNow.Ticks));
         }
 
         void Unload()
@@ -107,7 +107,7 @@ namespace KapNet
 
         private void HandleData(NetworkPacket packet)
         {
-            BroadcastRaw(packet.data, packet.ipEndPoint);
+            BroadcastRaw(packet.rawPacket, packet.ipEndPoint);
         }
 
         protected override void HandleHandShake(NetworkPacket networkPacket)

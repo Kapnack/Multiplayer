@@ -115,6 +115,7 @@ namespace KapNet.src
 
             NetworkPacket networkPacket = new NetworkPacket
             (
+                data,
                 type,
                 packetID,
                 metaData,
@@ -135,6 +136,7 @@ namespace KapNet.src
 
             NetworkPacket networkPacket = new NetworkPacket
             (
+                data,
                 type,
                 packetId,
                 metaData,
@@ -153,6 +155,7 @@ namespace KapNet.src
 
             NetworkPacket networkPacket = new NetworkPacket
             (
+                data,
                 type,
                 packetId,
                 metaData,
@@ -231,7 +234,7 @@ namespace KapNet.src
 
         private bool HandleReliablePacketRecived(NetworkPacket networkPacket)
         {
-            uint clientID = BitConverter.ToUInt32(networkPacket.payload, 0);
+            uint clientID = networkPacket.payload.Length != 0 ? BitConverter.ToUInt32(networkPacket.payload, 0) : 0;
 
             byte[] payload = new byte[sizeof(PacketType) + sizeof(uint)];
 
