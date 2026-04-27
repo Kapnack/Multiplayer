@@ -1,17 +1,31 @@
 ﻿using Assets.Code.Entities;
+using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Services;
 using MultiplayerArchitecture.Code.Scenes;
+using TMPro;
 using UnityEngine;
 
 namespace Assets.Code.Scenes
 {
     internal class GameplayViewScene : BaseScene
     {
+        GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
+
         private EntityFactoryView entityFactoryView;
         private EntityLogicView entityLogicView;
+        private TMP_Text pingText;
+
+        private string pingFormat;
+
+        public GameplayViewScene(TMP_Text pingText)
+        {
+            this.pingText = pingText;
+        }
 
         public override void Init()
         {
+            pingFormat = pingText.text;
+            pingText.text = string.Format(pingFormat, GameClient.Ping);
         }
 
         public override void Init(params object[] parameters)
@@ -35,6 +49,8 @@ namespace Assets.Code.Scenes
         public override void Tick(float deltaTime)
         {
             entityLogicView.Tick(deltaTime);
+
+            pingText.text = string.Format(pingFormat, GameClient.Ping);
         }
 
         public override void Dispose()

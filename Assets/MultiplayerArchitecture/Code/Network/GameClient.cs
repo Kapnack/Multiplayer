@@ -15,6 +15,9 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         EntityFactory EntityFactory => ServiceProvider.Instance.GetService<EntityFactory>();
 
         private ClientConnection connection;
+
+        public double Ping => connection.Ping;
+
         public bool IsPersistance => false;
 
         public uint MyID { private set; get; }

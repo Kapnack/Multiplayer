@@ -166,12 +166,15 @@ namespace KapNet.src
 
         private bool HandleRecivedMetaData(NetworkPacket packet)
         {
-            bool handle = false;
+            bool handle = true;
 
             foreach (KeyValuePair<PacketMetaData, RecivePacketMetaDataDelegate> strategy in recivingMetaDataStrategy)
             {
                 if (packet.metaData.HasFlag(strategy.Key))
-                    handle &= strategy.Value(packet);
+                {
+                    if (!strategy.Value(packet))
+                        handle = false;
+                }
             }
 
             return handle;

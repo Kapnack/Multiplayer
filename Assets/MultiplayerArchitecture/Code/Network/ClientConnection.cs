@@ -4,14 +4,17 @@ using KapNet;
 using KapNet.src;
 using System;
 using System.Net;
+using System.Net.NetworkInformation;
 
 public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDisposable
 {
     private IClient client;
 
-    private double lastServerResponce;
+    private DateTime lastServerResponce;
 
     private uint MyID = 0;
+
+    public double Ping {  get; private set; }
 
     public ClientConnection(IClient client)
     {
@@ -54,7 +57,7 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     private void CheckServerIsResponding()
     {
-        if (Time.RealTimeSinceStartUp - lastServerResponce > 10)
+        if ((DateTime.UtcNow - lastServerResponce).TotalSeconds > 10)
             client.OnServerShutDown();
     }
 
@@ -94,7 +97,7 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     public void Init()
     {
-        lastServerResponce = Time.RealTimeSinceStartUp;
+        lastServerResponce = DateTime.UtcNow;
 
         SendHandshake();
     }
@@ -121,6 +124,14 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     protected override void HandlePing(NetworkPacket networkPacket)
     {
-        lastServerResponce = networkPacket.timeStamp;
+        long ticks = BitConverter.ToInt64(networkPacket.payload, 0);
+
+        DateTime sendTime = new DateTime(ticks, DateTimeKind.Utc);
+
+        DateTime utcNow = DateTime.UtcNow;
+
+        Ping = (utcNow - sendTime).TotalMilliseconds;
+
+        lastServerResponce = utcNow;
     }
 }

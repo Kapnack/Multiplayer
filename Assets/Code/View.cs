@@ -3,6 +3,7 @@ using Assets.Code.Scenes;
 using ImageCampus.ToolBox.Services;
 using Multiplayer.Arch;
 using MultiplayerArchitecture.Code.Scenes;
+using TMPro;
 using UnityEngine;
 
 namespace Assets.Code
@@ -14,6 +15,7 @@ namespace Assets.Code
 
         [SerializeField] private GameObject usersPrefabs;
         [SerializeField] private Camera cam;
+        [SerializeField] private TMP_Text pingText;
 
         private void Awake()
         {
@@ -21,7 +23,7 @@ namespace Assets.Code
             Screen.SetResolution(800, 600, false);
 
             multiplayerArchitecture = new Multiplayer.Arch.MultiplayerArchitecture();
-            currentScene = new GameplayViewScene();
+            currentScene = new GameplayViewScene(pingText);
 
             multiplayerArchitecture.Init();
             currentScene.Init(usersPrefabs, cam);

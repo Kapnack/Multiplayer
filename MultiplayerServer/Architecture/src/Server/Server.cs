@@ -11,7 +11,7 @@ namespace KapNet
     {
         public uint id;
         public bool isConnected;
-        public double lastResponce;
+        public DateTime lastResponce;
     }
 
     public class Server : NetworkPeer<IPEndPoint>, IInitable, ITickable, IDisposable
@@ -20,7 +20,7 @@ namespace KapNet
         public int timeout = 10;
 
         IPEndPoint matchMakingIP;
-        private double matchMakerLastResponce;
+        private DateTime matchMakerLastResponce;
 
         private Dictionary<IPEndPoint, ClientData> clients = new Dictionary<IPEndPoint, ClientData>();
 
@@ -69,7 +69,7 @@ namespace KapNet
 
             SendPingToMatchMaker();
 
-            if (Time.RealTimeSinceStartUp - matchMakerLastResponce > timeout)
+            if ((DateTime.UtcNow - matchMakerLastResponce).TotalSeconds > timeout)
                 isConnectedToMatchMaking = false;
         }
 
@@ -98,11 +98,11 @@ namespace KapNet
             IPEndPoint ip = networkPacket.ipEndPoint;
 
             if (ip.Equals(matchMakingIP))
-                matchMakerLastResponce = Time.RealTimeSinceStartUp;
+                matchMakerLastResponce = DateTime.UtcNow;
             else if (clients.ContainsKey(ip))
-                clients[ip].lastResponce = Time.RealTimeSinceStartUp;
+                clients[ip].lastResponce = DateTime.UtcNow;
 
-            Send(ip, PacketType.Ping);
+            Send(ip, PacketType.Ping, BitConverter.GetBytes(DateTime.UtcNow.Ticks));
         }
 
         private void HandleData(NetworkPacket packet)
@@ -116,7 +116,7 @@ namespace KapNet
             {
                 Send(networkPacket.ipEndPoint, PacketType.Handshake, BitConverter.GetBytes(clients[networkPacket.ipEndPoint].id), PacketMetaData.Reliable);
                 clients[networkPacket.ipEndPoint].isConnected = true;
-                clients[networkPacket.ipEndPoint].lastResponce = Time.RealTimeSinceStartUp;
+                clients[networkPacket.ipEndPoint].lastResponce = DateTime.UtcNow;
                 return;
             }
 
@@ -128,7 +128,7 @@ namespace KapNet
                 {
                     id = newID,
                     isConnected = true,
-                    lastResponce = Time.RealTimeSinceStartUp
+                    lastResponce = DateTime.UtcNow
                 });
 
             ServerConsole.Log($"Client connected: {networkPacket.ipEndPoint} ID: {newID}");
@@ -196,7 +196,7 @@ namespace KapNet
             foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
             {
                 if (client.Value.isConnected)
-                    if (Time.RealTimeSinceStartUp - client.Value.lastResponce > timeout)
+                    if ((DateTime.UtcNow - client.Value.lastResponce).TotalSeconds > timeout)
                         toRemove.Add(client.Key);
             }
 
