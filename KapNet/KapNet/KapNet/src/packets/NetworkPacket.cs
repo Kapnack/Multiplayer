@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 
 namespace KapNet
@@ -9,17 +10,14 @@ namespace KapNet
         public PacketMetaData metaData;
         public byte[] payload;
         public IPEndPoint ipEndPoint;
-        public long timeStamp;
 
-        public NetworkPacket(PacketType type, uint packetID, PacketMetaData metaData, byte[] payload, long timeStamp, IPEndPoint ipEndPoint = null)
+        public NetworkPacket(PacketType type, uint packetID, PacketMetaData metaData, byte[] payload, IPEndPoint ipEndPoint = null)
         {
             this.type = type;
             this.packetID = packetID;
             this.metaData = metaData;
-            this.timeStamp = timeStamp;
-            this.clientId = clientId;
-            this.ipEndPoint = ipEndPoint;
             this.payload = payload;
+            this.ipEndPoint = ipEndPoint;
         }
     }
 }

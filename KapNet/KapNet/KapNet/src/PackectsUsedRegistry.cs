@@ -1,27 +1,28 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Sockets;
 
 namespace KapNet.src
 {
     internal class PackectsUsedRegistry<ClientKeyType, PacketsKeyType>
     {
-        private Dictionary<ClientKeyType, Dictionary<PacketsKeyType, Dictionary<uint, double>>> recivedAndUsedPacket = new Dictionary<ClientKeyType, Dictionary<PacketsKeyType, Dictionary<uint, double>>>();
+        private Dictionary<ClientKeyType, Dictionary<PacketsKeyType, Dictionary<uint, DateTime>>> recivedAndUsedPacket = new Dictionary<ClientKeyType, Dictionary<PacketsKeyType, Dictionary<uint, DateTime>>>();
 
         List<(ClientKeyType user, PacketsKeyType packetType, uint packetId)> toRemove = new List<(ClientKeyType user, PacketsKeyType packetType, uint packetId)>();
 
-        public void Tick(double RealTimeSinceStartUp)
+        public void Tick()
         {
-            foreach (KeyValuePair<ClientKeyType, Dictionary<PacketsKeyType, Dictionary<uint, double>>> userPacketPerType in recivedAndUsedPacket)
+            foreach (KeyValuePair<ClientKeyType, Dictionary<PacketsKeyType, Dictionary<uint, DateTime>>> userPacketPerType in recivedAndUsedPacket)
             {
                 ClientKeyType userID = userPacketPerType.Key;
 
-                foreach (KeyValuePair<PacketsKeyType, Dictionary<uint, double>> typePerID in userPacketPerType.Value)
+                foreach (KeyValuePair<PacketsKeyType, Dictionary<uint, DateTime>> typePerID in userPacketPerType.Value)
                 {
                     PacketsKeyType type = typePerID.Key;
 
-                    foreach (KeyValuePair<uint, double> packet in typePerID.Value)
+                    foreach (KeyValuePair<uint, DateTime> packet in typePerID.Value)
                     {
-                        if (RealTimeSinceStartUp - packet.Value > 10)
+                        if (Math.Abs((DateTime.UtcNow - packet.Value).TotalSeconds) > 10)
                         {
                             toRemove.Add((userID, type, packet.Key));
                         }
@@ -52,10 +53,10 @@ namespace KapNet.src
 
         public bool ContainsPacket(ClientKeyType user, PacketsKeyType packetType, uint packetId)
         {
-            if (!recivedAndUsedPacket.TryGetValue(user, out Dictionary<PacketsKeyType, Dictionary<uint, double>> userTypePackets))
+            if (!recivedAndUsedPacket.TryGetValue(user, out Dictionary<PacketsKeyType, Dictionary<uint, DateTime>> userTypePackets))
                 return false;
 
-            if (!userTypePackets.TryGetValue(packetType, out Dictionary<uint, double> packets))
+            if (!userTypePackets.TryGetValue(packetType, out Dictionary<uint, DateTime> packets))
                 return false;
 
             if (!packets.ContainsKey(packetId))
@@ -64,21 +65,21 @@ namespace KapNet.src
             return true;
         }
 
-        public void SetPacket(ClientKeyType clientKey, PacketsKeyType packetType, uint packetID, double RealTimeSinceStartUp)
+        public void SetPacket(ClientKeyType clientKey, PacketsKeyType packetType, uint packetID)
         {
-            if (!recivedAndUsedPacket.TryGetValue(clientKey, out Dictionary<PacketsKeyType, Dictionary<uint, double>> packetsPerType))
+            if (!recivedAndUsedPacket.TryGetValue(clientKey, out Dictionary<PacketsKeyType, Dictionary<uint, DateTime>> packetsPerType))
             {
-                packetsPerType = new Dictionary<PacketsKeyType, Dictionary<uint, double>>();
+                packetsPerType = new Dictionary<PacketsKeyType, Dictionary<uint, DateTime>>();
                 recivedAndUsedPacket[clientKey] = packetsPerType;
             }
 
-            if (!packetsPerType.TryGetValue(packetType, out Dictionary<uint, double> packetsById))
+            if (!packetsPerType.TryGetValue(packetType, out Dictionary<uint, DateTime> packetsById))
             {
-                packetsById = new Dictionary<uint, double>();
+                packetsById = new Dictionary<uint, DateTime>();
                 packetsPerType[packetType] = packetsById;
             }
 
-            packetsById[packetID] = RealTimeSinceStartUp;
+            packetsById[packetID] = DateTime.UtcNow;
         }
 
         public void Clear()

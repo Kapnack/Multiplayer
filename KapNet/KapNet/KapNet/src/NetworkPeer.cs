@@ -8,14 +8,14 @@ namespace KapNet.src
     public abstract class NetworkPeer<ClientKey> : IReceiveData, INetworkPeer
     {
         protected delegate void PacketTypeDelegate(NetworkPacket networkPacket);
-        private delegate void SendPacketMetaDataDelegate(NetworkPacket networkPacket);
+        private delegate void SendPacketMetaDataDelegate(NetworkPacket networkPacket, byte[] data);
         private delegate bool RecivePacketMetaDataDelegate(NetworkPacket networkPacket);
 
         protected const uint NULL_NETWORKPEER = 0;
 
         PacketResender packetResender;
 
-        private List<NetworkPacket> cryticalPackets = new List<NetworkPacket>();
+        private List<byte[]> cryticalPackets = new List<byte[]>();
 
         private Dictionary<ClientKey, Dictionary<PacketType, SortedDictionary<uint, NetworkPacket>>> ordenablePackets = new Dictionary<ClientKey, Dictionary<PacketType, SortedDictionary<uint, NetworkPacket>>>();
         private Dictionary<ClientKey, Dictionary<PacketType, uint>> lastPacketUsed = new Dictionary<ClientKey, Dictionary<PacketType, uint>>();
@@ -64,8 +64,8 @@ namespace KapNet.src
             if (connection != null)
                 connection.FlushReceiveData();
 
-            packetResender.Tick(Time.RealTimeSinceStartUp);
-            packectsUsedRegistry.Tick(Time.RealTimeSinceStartUp);
+            packetResender.Tick();
+            packectsUsedRegistry.Tick();
         }
 
         public void Connect(string ip, int port)
@@ -115,13 +115,10 @@ namespace KapNet.src
 
             NetworkPacket networkPacket = new NetworkPacket
             (
-                data,
                 type,
                 packetID,
                 metaData,
                 payload,
-                (float)Time.RealTimeSinceStartUp,
-                NULL_NETWORKPEER,
                 ipEndpoint
             );
 
@@ -134,21 +131,18 @@ namespace KapNet.src
 
         public void Send(IPEndPoint ip, PacketType type, byte[] payload = null, PacketMetaData metaData = PacketMetaData.None)
         {
-            (byte[] data, uint packetId) = packetFactory.Create(type, networkID, payload, metaData);
+            (byte[] data, uint packetId) = packetFactory.Create(type, payload, metaData);
 
             NetworkPacket networkPacket = new NetworkPacket
             (
-                data,
                 type,
                 packetId,
                 metaData,
                 payload,
-                (float)Time.RealTimeSinceStartUp,
-                networkID,
                 ip
             );
 
-            HandleSendMetaData(networkPacket);
+            HandleSendMetaData(networkPacket, data);
 
             SendRaw(data, ip);
         }
@@ -159,15 +153,13 @@ namespace KapNet.src
 
             NetworkPacket networkPacket = new NetworkPacket
             (
-                data,
                 type,
                 packetId,
                 metaData,
-                payload,
-                (float)Time.RealTimeSinceStartUp
+                payload
             );
 
-            HandleSendMetaData(networkPacket);
+            HandleSendMetaData(networkPacket, data);
 
             SendRaw(data);
         }
@@ -185,13 +177,13 @@ namespace KapNet.src
             return handle;
         }
 
-        private void HandleSendMetaData(NetworkPacket packet)
+        private void HandleSendMetaData(NetworkPacket packet, byte[] data)
         {
             foreach (KeyValuePair<PacketMetaData, SendPacketMetaDataDelegate> strategy in sendingMetaDataStrategy)
             {
                 if (packet.metaData.HasFlag(strategy.Key))
                 {
-                    strategy.Value(packet);
+                    strategy.Value(packet, data);
                 }
             }
         }
@@ -224,19 +216,19 @@ namespace KapNet.src
             packetResender.Remove(packetType, packetID);
         }
 
-        private void HandleReliableMessageSend(NetworkPacket networkPacket)
+        private void HandleReliableMessageSend(NetworkPacket networkPacket, byte[] data)
         {
-            packetResender.Add(networkPacket.data, Time.RealTimeSinceStartUp, networkPacket.ipEndPoint);
+            packetResender.Add(networkPacket.type, data, networkPacket.packetID, networkPacket.ipEndPoint);
         }
 
-        private void HandleCriticalMessageSend(NetworkPacket packet)
+        private void HandleCriticalMessageSend(NetworkPacket packet, byte[] data)
         {
 
         }
 
         private bool HandleReliablePacketRecived(NetworkPacket networkPacket)
         {
-            uint clientID = BitConverter.ToUInt32(networkPacket.payload);
+            uint clientID = BitConverter.ToUInt32(networkPacket.payload, 0);
 
             byte[] payload = new byte[sizeof(PacketType) + sizeof(uint)];
 
@@ -250,19 +242,14 @@ namespace KapNet.src
 
             ClientKey clientKey = typeof(ClientKey) == typeof(IPEndPoint) ? (ClientKey)(object)networkPacket.ipEndPoint : (ClientKey)(object)clientID;
 
-            if (packectsUsedRegistry.ContainsPacket(clientKey, networkPacket.type, networkPacket.packetId))
-            {
-                packectsUsedRegistry
-            }
-            else
-            packectsUsedRegistry.SetPacket(clientKey, networkPacket.type, networkPacket.packetID, Time.RealTimeSinceStartUp);
+            packectsUsedRegistry.SetPacket(clientKey, networkPacket.type, networkPacket.packetID);
 
             return true;
         }
 
         private bool HandleOrdenablePacketRecived(NetworkPacket networkPacket)
         {
-            ClientKey clientKey = typeof(ClientKey) == typeof(IPEndPoint) ? (ClientKey)(object)networkPacket.ipEndPoint : (ClientKey)(object)networkPacket.clientId;
+            ClientKey clientKey = typeof(ClientKey) == typeof(IPEndPoint) ? (ClientKey)(object)networkPacket.ipEndPoint : (ClientKey)(object)BitConverter.ToUInt32(networkPacket.payload, 0);
 
             if (!ordenablePackets.TryGetValue(clientKey, out Dictionary<PacketType, SortedDictionary<uint, NetworkPacket>> clientsPackets))
             {

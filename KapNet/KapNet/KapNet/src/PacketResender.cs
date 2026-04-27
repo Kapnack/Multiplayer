@@ -1,4 +1,5 @@
 ﻿using KapNet.src.time;
+using System;
 using System.Collections.Generic;
 using System.Net;
 
@@ -15,7 +16,7 @@ namespace KapNet.src
             this.networkPeer = networkPeer;
         }
 
-        public void Tick(double RealTimeSinceStartUp)
+        public void Tick()
         {
             foreach (KeyValuePair<PacketType, List<PacketAwaitingResponce>> packetsType in packetsAwaitingResponce)
             {
@@ -25,14 +26,16 @@ namespace KapNet.src
                 {
                     PacketAwaitingResponce packet = currentList[i];
 
-                    if (RealTimeSinceStartUp - packet.lastTimeSent > 3)
+                    DateTime dateTime = DateTime.Now;
+
+                    if (Math.Abs((dateTime - packet.lastTimeSent).TotalSeconds) > 3)
                     {
                         if (!networkPeer.IsConnected)
                             networkPeer.SendRaw(packet.data, packet.ipEndPoint);
                         else
                             networkPeer.SendRaw(packet.data);
 
-                        packet.lastTimeSent = RealTimeSinceStartUp;
+                        packet.lastTimeSent = dateTime;
                     }
                 }
             }
@@ -46,15 +49,16 @@ namespace KapNet.src
             packetsAwaitingResponce[packetType].Add(packet);
         }
 
-        public void Add(byte[] data, double RealTimeSinceStartUp, IPEndPoint reciver = null)
+        public void Add(PacketType packetType, byte[] data, uint packetID, IPEndPoint reciver = null)
         {
             if (!packetsAwaitingResponce.ContainsKey(packetType))
                 packetsAwaitingResponce[packetType] = new List<PacketAwaitingResponce>();
 
             packetsAwaitingResponce[packetType].Add(new PacketAwaitingResponce(
               data,
+              packetID,
               reciver,
-              RealTimeSinceStartUp
+              DateTime.UtcNow
           ));
         }
 
