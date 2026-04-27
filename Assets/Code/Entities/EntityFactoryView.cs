@@ -4,6 +4,7 @@ using ImageCampus.ToolBox.Dataflow;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using System;
+using System.Reflection;
 using UnityEngine;
 
 namespace Assets.Code.Entities
@@ -17,10 +18,14 @@ namespace Assets.Code.Entities
         private GameObject usersPrefab;
         private Camera camera;
 
+        private MethodInfo setIntityID;
+
         public EntityFactoryView(GameObject usersPrefab, Camera camera)
         {
             this.usersPrefab = usersPrefab;
             this.camera = camera;
+
+            setIntityID = typeof(EntityView).GetMethod(EntityView.SetIDName, BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
         public void Init()
@@ -40,6 +45,8 @@ namespace Assets.Code.Entities
             gameObject.AddComponent<EntityView>();
 
             EntityView entityView = gameObject.GetComponent<EntityView>();
+
+            setIntityID.Invoke(entityView, new object[] { entityCreated.objectID });
 
             EntityRegistryView.OnEntityCreated(entityCreated.objectID, entityView);
 

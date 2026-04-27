@@ -34,7 +34,7 @@ namespace Assets.Code.Scenes
 
         public override void Tick(float deltaTime)
         {
-            
+            entityLogicView.Tick(deltaTime);
         }
 
         public override void Dispose()

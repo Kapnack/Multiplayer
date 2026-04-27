@@ -1,53 +1,38 @@
-﻿using Assets.MultiplayerArchitecture.Code.Entities.Events;
-using Assets.MultiplayerArchitecture.Code.Network;
-using ImageCampus.ToolBox.Dataflow;
-using ImageCampus.ToolBox.Events;
-using ImageCampus.ToolBox.Services;
+﻿using ImageCampus.ToolBox.Dataflow;
 using System;
-using UnityEngine;
 
 namespace Assets.Code.Entities
 {
-    internal class EntityLogicView : IInitable, IDisposable
+    internal class EntityLogicView : IInitable, ITickable, IDisposable
     {
-        EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
-
-        EntityRegistryView EntityRegistryView => ServiceProvider.Instance.GetService<EntityRegistryView>();
-        GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
+        CarLogic carLogic;
+        ItemBoxLogic itemBoxLogic;
 
         public void Init()
         {
-            EventBus.Subscribe<NetworkClientMove>(OnEntityMove);
-            EventBus.Subscribe<PlayerMove>(OnPlayerMove);
-            EventBus.Subscribe<ClientLeft>(OnClientLeft);
-        }
+            carLogic = new CarLogic();
+            itemBoxLogic = new ItemBoxLogic();
 
+            carLogic.Init();
+            itemBoxLogic.Init();
+        }
 
         public void LateInit()
         {
-
-        }
-        private void OnClientLeft(in ClientLeft callback)
-        {
-            UnityEngine.Object.Destroy(EntityRegistryView[callback.objectID].gameObject);
-            EntityRegistryView.Remove(GameClient[callback.networkID]);
+            carLogic.LateInit();
+            itemBoxLogic.LateInit();
         }
 
-        private void OnEntityMove(in NetworkClientMove networkClientMove)
+        public void Tick(float deltaTime)
         {
-            EntityRegistryView[GameClient[networkClientMove.networkID]].transform.position = new Vector3(networkClientMove.coordinate.x, networkClientMove.coordinate.y, networkClientMove.coordinate.z);
-        }
-
-        private void OnPlayerMove(in PlayerMove playerMove)
-        {
-            EntityRegistryView[GameClient[GameClient.MyID]].transform.position = new Vector3(playerMove.coordinate.x, playerMove.coordinate.y, playerMove.coordinate.z);
+            itemBoxLogic.Tick(deltaTime);
         }
 
         public void Dispose()
         {
-            EventBus.Unsubscribe<NetworkClientMove>(OnEntityMove);
-            EventBus.Unsubscribe<PlayerMove>(OnPlayerMove);
-            EventBus.Unsubscribe<ClientLeft>(OnClientLeft);
+            carLogic.Dispose();
+            itemBoxLogic.Dispose();
         }
+
     }
 }
