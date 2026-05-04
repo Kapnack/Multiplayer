@@ -239,7 +239,7 @@ namespace KapNet.src
             byte[] payload = new byte[sizeof(PacketType) + sizeof(uint)];
 
             BitConverter.GetBytes((int)networkPacket.type).CopyTo(payload, 0);
-            BitConverter.GetBytes(networkPacket.packetID).CopyTo(payload, sizeof(int));
+            BitConverter.GetBytes(networkPacket.packetID).CopyTo(payload, sizeof(uint));
 
             if (IsConnected)
                 Send(PacketType.Acknowledgement, payload);
@@ -248,9 +248,16 @@ namespace KapNet.src
 
             ClientKey clientKey = typeof(ClientKey) == typeof(IPEndPoint) ? (ClientKey)(object)networkPacket.ipEndPoint : (ClientKey)(object)clientID;
 
+            bool shouldBeProcess = false;
+
+            if (packectsUsedRegistry.ContainsPacket(clientKey, networkPacket.type, networkPacket.packetID))
+                shouldBeProcess = false;
+            else
+                shouldBeProcess = true;
+
             packectsUsedRegistry.SetPacket(clientKey, networkPacket.type, networkPacket.packetID);
 
-            return true;
+            return shouldBeProcess;
         }
 
         private bool HandleOrdenablePacketRecived(NetworkPacket networkPacket)

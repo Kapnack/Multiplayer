@@ -133,7 +133,12 @@ namespace KapNet
 
             ServerConsole.Log($"Client connected: {networkPacket.ipEndPoint} ID: {newID}");
 
-            Send(networkPacket.ipEndPoint, PacketType.Handshake, BitConverter.GetBytes(newID), PacketMetaData.Reliable);
+            byte[] payload = new byte[sizeof(uint) * 2];
+
+            BitConverter.GetBytes(0).CopyTo(payload, 0);
+            BitConverter.GetBytes(newID).CopyTo(payload, sizeof(uint));
+
+            Send(networkPacket.ipEndPoint, PacketType.Handshake, payload, PacketMetaData.Reliable);
 
             foreach (KeyValuePair<IPEndPoint, ClientData> it in clients)
                 if (!it.Key.Equals(networkPacket.ipEndPoint))

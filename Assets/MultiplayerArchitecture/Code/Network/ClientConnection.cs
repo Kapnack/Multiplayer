@@ -14,7 +14,7 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     private uint MyID = 0;
 
-    public double Ping {  get; private set; }
+    public double Ping { get; private set; }
 
     public ClientConnection(IClient client)
     {
@@ -63,7 +63,12 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     void SendHandshake()
     {
-        Send(PacketType.Handshake, BitConverter.GetBytes((byte)ConnectionRole.Client), PacketMetaData.Reliable);
+        byte[] payload = new byte[sizeof(uint) + sizeof(ConnectionRole)];
+
+        BitConverter.GetBytes(MyID).CopyTo(payload, 0);
+        payload[sizeof(uint)] = (byte)ConnectionRole.Client;
+
+        Send(PacketType.Handshake, payload, PacketMetaData.Reliable);
     }
 
     void SendPing()
