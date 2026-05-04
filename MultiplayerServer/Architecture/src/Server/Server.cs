@@ -4,6 +4,7 @@ using ServerArquitecture.src;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.NetworkInformation;
 
 namespace KapNet
 {
@@ -12,6 +13,14 @@ namespace KapNet
         public uint id;
         public bool isConnected;
         public DateTime lastResponce;
+        public double ping;
+    }
+
+    public struct MatchMakerData
+    {
+        public IPEndPoint IPEndPoint;
+        public DateTime lastResponce;
+        public double ping;
     }
 
     public class Server : NetworkPeer<IPEndPoint>, IInitable, ITickable, IDisposable
@@ -19,8 +28,7 @@ namespace KapNet
         public int port = 7777;
         public int timeout = 10;
 
-        IPEndPoint matchMakingIP;
-        private DateTime matchMakerLastResponce;
+        MatchMakerData matchMakerData;
 
         private Dictionary<IPEndPoint, ClientData> clients = new Dictionary<IPEndPoint, ClientData>();
 
@@ -32,12 +40,14 @@ namespace KapNet
         {
             PacketTypeStrategy.Add(PacketType.Data, HandleData);
 
+            matchMakerData = new MatchMakerData();
+
             Connect(portToHost);
 
             IPAddress ipAddress = IPAddress.Parse(matchMakingIP);
-            this.matchMakingIP = new IPEndPoint(ipAddress, portToConnect);
+            matchMakerData.IPEndPoint = new IPEndPoint(ipAddress, portToConnect);
 
-            Send(this.matchMakingIP, PacketType.Handshake, BitConverter.GetBytes((byte)ConnectionRole.Server), PacketMetaData.Reliable);
+            Send(matchMakerData.IPEndPoint, PacketType.Handshake, BitConverter.GetBytes((byte)ConnectionRole.Server), PacketMetaData.Reliable);
 
             isConnectedToMatchMaking = true;
         }
@@ -69,13 +79,13 @@ namespace KapNet
 
             SendPingToMatchMaker();
 
-            if ((DateTime.UtcNow - matchMakerLastResponce).TotalSeconds > timeout)
+            if ((DateTime.UtcNow - matchMakerData.lastResponce).TotalSeconds > timeout)
                 isConnectedToMatchMaking = false;
         }
 
         private void SendPingToMatchMaker()
         {
-            Send(matchMakingIP, PacketType.Ping, BitConverter.GetBytes(DateTime.UtcNow.Ticks));
+            Send(matchMakerData.IPEndPoint, PacketType.Ping, BitConverter.GetBytes(DateTime.UtcNow.Ticks));
         }
 
         void Unload()
@@ -97,10 +107,24 @@ namespace KapNet
         {
             IPEndPoint ip = networkPacket.ipEndPoint;
 
-            if (ip.Equals(matchMakingIP))
-                matchMakerLastResponce = DateTime.UtcNow;
+            long ticks = BitConverter.ToInt64(networkPacket.payload, 0);
+
+            DateTime sendTime = new DateTime(ticks, DateTimeKind.Utc);
+
+            DateTime utcNow = DateTime.UtcNow;
+
+            double ping = (utcNow - sendTime).TotalMilliseconds;
+
+            if (ip.Equals(matchMakerData.IPEndPoint))
+            {
+                matchMakerData.lastResponce = DateTime.UtcNow;
+                matchMakerData.ping = ping;
+            }
             else if (clients.ContainsKey(ip))
+            {
                 clients[ip].lastResponce = DateTime.UtcNow;
+                clients[ip].ping = ping;
+            }
 
             Send(ip, PacketType.Ping, BitConverter.GetBytes(DateTime.UtcNow.Ticks));
         }

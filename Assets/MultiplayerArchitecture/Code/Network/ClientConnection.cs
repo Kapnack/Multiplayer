@@ -73,7 +73,7 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     void SendPing()
     {
-        Send(PacketType.Ping);
+        Send(PacketType.Ping, BitConverter.GetBytes(DateTime.UtcNow.Ticks));
     }
 
     protected override void HandleClientLeft(NetworkPacket packet)

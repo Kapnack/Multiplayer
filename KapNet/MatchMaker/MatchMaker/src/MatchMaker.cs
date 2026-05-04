@@ -27,7 +27,14 @@ class ServerInfo
     public IPEndPoint endPoint;
     public int port;
     public int maxPlayers;
-    public double lastHeartbeat;
+    public DateTime lastResponse;
+}
+
+class ClientInfo
+{
+    public string name;
+    public DateTime lastResponce;
+    public long ping;
 }
 
 namespace KapNet
@@ -37,7 +44,7 @@ namespace KapNet
         private const int port = 7777;
         private const int timeout = 10;
 
-        private Dictionary<IPEndPoint, double> clients = new Dictionary<IPEndPoint, double>();
+        private Dictionary<IPEndPoint, ClientInfo> clients = new Dictionary<IPEndPoint, ClientInfo>();
         private Queue<IPEndPoint> clientQueue = new Queue<IPEndPoint>();
         private List<ServerInfo> servers = new List<ServerInfo>();
 
@@ -67,7 +74,7 @@ namespace KapNet
 
         void Unload()
         {
-            foreach (KeyValuePair<IPEndPoint, double> client in clients)
+            foreach (KeyValuePair<IPEndPoint, ClientInfo> client in clients)
                 DisconnectClient(client.Key);
         }
 
@@ -83,13 +90,13 @@ namespace KapNet
             IPEndPoint ip = packet.ipEndPoint;
 
             if (clients.ContainsKey(ip))
-                clients[ip] = Time.RealTimeSinceStartUp;
+                clients[ip].lastResponce = DateTime.UtcNow;
 
             foreach (ServerInfo server in servers)
             {
                 if (server.endPoint.Equals(ip))
                 {
-                    server.lastHeartbeat = Time.RealTimeSinceStartUp;
+                    server.lastResponse = DateTime.UtcNow;
                     break;
                 }
             }
@@ -142,7 +149,7 @@ namespace KapNet
                     }
                 }
 
-                clients[networkPacket.ipEndPoint] = Time.RealTimeSinceStartUp;
+                clients[networkPacket.ipEndPoint].lastResponce = DateTime.UtcNow;
 
                 clientQueue.Enqueue(networkPacket.ipEndPoint);
 
@@ -162,7 +169,7 @@ namespace KapNet
                     endPoint = networkPacket.ipEndPoint,
                     port = lasOpenPort,
                     maxPlayers = 5,
-                    lastHeartbeat = Time.RealTimeSinceStartUp
+                    lastResponse = DateTime.UtcNow
                 };
 
                 servers.Add(newServer);
@@ -248,9 +255,9 @@ namespace KapNet
         {
             List<IPEndPoint> toRemove = new List<IPEndPoint>();
 
-            foreach (KeyValuePair<IPEndPoint, double> client in clients)
+            foreach (KeyValuePair<IPEndPoint, ClientInfo> client in clients)
             {
-                if (Time.RealTimeSinceStartUp - client.Value > timeout)
+                if ((DateTime.UtcNow - client.Value.lastResponce).TotalSeconds > timeout)
                     toRemove.Add(client.Key);
             }
 
@@ -265,9 +272,11 @@ namespace KapNet
         {
             List<ServerInfo> toRemove = new List<ServerInfo>();
 
+            DateTime now  = DateTime.UtcNow;
+
             foreach (ServerInfo server in servers)
             {
-                if (Time.RealTimeSinceStartUp - server.lastHeartbeat > timeout)
+                if ((now - server.lastResponse).TotalSeconds > timeout)
                     toRemove.Add(server);
             }
 
