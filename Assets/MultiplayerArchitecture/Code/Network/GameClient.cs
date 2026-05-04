@@ -14,7 +14,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
         EntityFactory EntityFactory => ServiceProvider.Instance.GetService<EntityFactory>();
 
-        private ClientConnection connection;
+        public ClientConnection connection { get; private set; }
 
         public double Ping => connection.Ping;
 

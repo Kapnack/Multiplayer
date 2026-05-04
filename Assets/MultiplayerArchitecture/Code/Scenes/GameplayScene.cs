@@ -13,7 +13,6 @@ namespace MultiplayerArchitecture.Code.Scenes
 
         public override void Init()
         {
-            ServiceProvider.Instance.AddService<GameClient>(new GameClient());
             ServiceProvider.Instance.AddService<EntityRegistry>(new EntityRegistry());
             ServiceProvider.Instance.AddService<EntityFactory>(new EntityFactory());
 
