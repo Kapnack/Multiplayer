@@ -1,6 +1,8 @@
 using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Services;
+using KapNet;
 using System;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,10 +30,16 @@ public class Menu : MonoBehaviour
 
         GameClient.Init();
 
-        int.TryParse(port.text, out int result);
+        int.TryParse(port.text, out int levelID);
 
-        GameClient.connection.Connect(ip.text, result);
+        GameClient.connection.Connect(ip.text, levelID);
 
-        GameClient.Send
+        byte[] payload = new byte[sizeof(int) * 2 + nameText.text.Length * sizeof(byte)];
+
+        BitConverter.GetBytes(levelID).CopyTo(payload, 0);
+        BitConverter.GetBytes(nameText.text.Length).CopyTo(payload, sizeof(uint));
+        Encoding.UTF8.GetBytes(nameText.text).CopyTo(payload, sizeof(uint) * 2);
+
+        GameClient.connection.SendPacket(PacketType.Handshake, payload, PacketMetaData.Reliable);
     }
 }
