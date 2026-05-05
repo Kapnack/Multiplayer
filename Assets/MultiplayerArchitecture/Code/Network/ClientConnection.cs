@@ -69,10 +69,10 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
         Send(PacketType.Handshake, payload, PacketMetaData.Reliable);
     }
 
-    //public void SendPacket(PacketType type, byte[] payload )
-    //{
-    //    Send(type, payload, metaData);
-    //}
+    public void SendPacket(PacketType type, byte[] payload, PacketMetaData metaData)
+    {
+        Send(type, payload, metaData);
+    }
 
     void SendPing()
     {

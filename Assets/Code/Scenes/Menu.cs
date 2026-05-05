@@ -34,9 +34,10 @@ public class Menu : MonoBehaviour
 
         GameClient.connection.Connect(ip.text, levelID);
 
-        byte[] payload = new byte[sizeof(int) * 2 + nameText.text.Length * sizeof(byte)];
+        byte[] payload = new byte[sizeof(uint) + sizeof(int) * 2 + nameText.text.Length * sizeof(byte)];
 
-        BitConverter.GetBytes(levelID).CopyTo(payload, 0);
+        BitConverter.GetBytes(GameClient.MyID).CopyTo(payload, 0);
+        BitConverter.GetBytes(levelID).CopyTo(payload, sizeof(uint));
         BitConverter.GetBytes(nameText.text.Length).CopyTo(payload, sizeof(uint));
         Encoding.UTF8.GetBytes(nameText.text).CopyTo(payload, sizeof(uint) * 2);
 
