@@ -2,8 +2,11 @@ using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Services;
 using KapNet;
 using System;
+using System.Collections.Generic;
 using System.Text;
+using Unity.VectorGraphics;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class Menu : MonoBehaviour
@@ -16,13 +19,21 @@ public class Menu : MonoBehaviour
     [SerializeField] private InputField port;
     [SerializeField] private Button connect;
 
+    private Dictionary<string, string> maps = new Dictionary<string, string>();
+
     private void Awake()
     {
+        maps.Add("1", "map1");
+        maps.Add("2", "map2");
+
         connect.onClick.AddListener(AttentToConnect);
     }
 
     private void AttentToConnect()
     {
+        if (!maps.ContainsKey(levelText.text))
+            return;
+
         if (nameText.text.Equals("") || ip.text.Equals("") || port.text.Equals(""))
             return;
 
@@ -42,5 +53,7 @@ public class Menu : MonoBehaviour
         Encoding.UTF8.GetBytes(nameText.text).CopyTo(payload, sizeof(uint) * 2);
 
         GameClient.connection.SendPacket(PacketType.Handshake, payload, PacketMetaData.Reliable);
+
+        SceneManager.LoadScene(maps[levelText.text], LoadSceneMode.Single);
     }
 }
