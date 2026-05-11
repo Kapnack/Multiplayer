@@ -4,7 +4,6 @@ using KapNet;
 using KapNet.src;
 using System;
 using System.Net;
-using System.Net.NetworkInformation;
 
 public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDisposable
 {
@@ -16,7 +15,7 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     public double Ping { get; private set; }
 
-    public ClientConnection(IClient client)
+    public ClientConnection(IClient client) : base()
     {
         this.client = client;
 
@@ -44,12 +43,19 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
         Connect(ipAddress, port);
 
-        SendHandshake();
+        SendHandshake(new byte[0]);
     }
 
     protected override void HandleHandShake(NetworkPacket networkPacket)
     {
-        MyID = BitConverter.ToUInt32(networkPacket.payload, 0);
+        MyID = BitConverter.ToUInt32(networkPacket.payload, sizeof(uint));
+        int seedBytes = BitConverter.ToInt32(networkPacket.payload, sizeof(uint) * 2);
+
+        byte[] encryptionSeed = new byte[seedBytes];
+
+        Buffer.BlockCopy(encryptionSeed, 0, networkPacket.payload, sizeof(uint) * 2 + sizeof(int), seedBytes);
+
+        packetEncryptor = new PacketEncryptor(encryptionSeed);
         client.OnHandShake(MyID);
     }
 
@@ -59,14 +65,15 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
             client.OnServerShutDown();
     }
 
-    void SendHandshake()
+    public void SendHandshake(byte[] payload)
     {
-        byte[] payload = new byte[sizeof(uint) + sizeof(ConnectionRole)];
+        byte[] newPayload = new byte[sizeof(uint) + sizeof(ConnectionRole) + payload.Length];
 
         BitConverter.GetBytes(MyID).CopyTo(payload, 0);
         payload[sizeof(uint)] = (byte)ConnectionRole.Client;
+        Buffer.BlockCopy(payload, 0, newPayload, sizeof(uint) + sizeof(ConnectionRole), payload.Length);
 
-        Send(PacketType.Handshake, payload, PacketMetaData.Reliable);
+        Send(PacketType.Handshake, newPayload, PacketMetaData.Reliable);
     }
 
     public void SendPacket(PacketType type, byte[] payload, PacketMetaData metaData)
@@ -106,8 +113,6 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
     public void Init()
     {
         lastServerResponce = DateTime.UtcNow;
-
-        SendHandshake();
     }
 
     public void LateInit()
@@ -119,6 +124,9 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
         Tick();
 
         CheckServerIsResponding();
+
+        if (MyID.Equals(0))
+            return;
 
         SendPing();
     }

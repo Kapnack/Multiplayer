@@ -1,4 +1,5 @@
 using Assets.MultiplayerArchitecture.Code.Entities;
+using Assets.MultiplayerArchitecture.Code.Entities.Events;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using UnityEngine;
@@ -7,12 +8,23 @@ public class PlayerController : MonoBehaviour
 {
     EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
+    private uint ownerNetworkObjectID;
+    private uint objectNetworkID;
+
     [SerializeField] private float acceleration = 20.0f;
     [SerializeField] private float maxSpeed = 20.0f;
     [SerializeField] private float turnSpeed = 150.0f;
     [SerializeField] private float drag = 0f;
 
     private Rigidbody rb;
+
+    public string SetIDMethod => nameof(SetID);
+
+    private void SetID(uint ownerNetworkObjectID, uint objectNetworkID)
+    {
+        this.ownerNetworkObjectID = ownerNetworkObjectID;
+        this.objectNetworkID = objectNetworkID;
+    }
 
     private void Awake()
     {
@@ -69,7 +81,7 @@ public class PlayerController : MonoBehaviour
         {
             Vector3 newPos = transform.position + velocity * Time.fixedDeltaTime;
 
-            EventBus.Raise<PlayerMove>(new Coordinate(newPos.x, newPos.y, newPos.z));
+            EventBus.Raise<NetworkObjectMoveEvent>(ownerNetworkObjectID, objectNetworkID, new Coordinate(newPos.x, newPos.y, newPos.z));
         }
     }
 

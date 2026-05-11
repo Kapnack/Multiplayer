@@ -10,3 +10,14 @@ D:\UnityProjects\Multiplayer\MultiplayerServer\Architecture\bin\Debug\ToolBox.dl
 D:\UnityProjects\Multiplayer\MultiplayerServer\Architecture\obj\Debug\Architec.80494994.Up2Date
 D:\UnityProjects\Multiplayer\MultiplayerServer\Architecture\obj\Debug\Architecture.dll
 D:\UnityProjects\Multiplayer\MultiplayerServer\Architecture\obj\Debug\Architecture.pdb
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\bin\Debug\Architecture.dll.config
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\bin\Debug\Architecture.dll
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\bin\Debug\Architecture.pdb
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\bin\Debug\ToolBox.dll
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\bin\Debug\ToolBox.pdb
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\bin\Debug\ToolBox.dll.config
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\obj\Debug\Architecture.csproj.AssemblyReference.cache
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\obj\Debug\Architecture.csproj.CoreCompileInputs.cache
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\obj\Debug\Architec.80494994.Up2Date
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\obj\Debug\Architecture.dll
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\obj\Debug\Architecture.pdb

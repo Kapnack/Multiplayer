@@ -1,13 +1,12 @@
 ﻿using Assets.Code.Entities;
 using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Services;
-using MultiplayerArchitecture.Code.Scenes;
 using TMPro;
 using UnityEngine;
 
 namespace Assets.Code.Scenes
 {
-    internal class GameplayViewScene : BaseScene
+    internal class GameplayViewScene : BaseSceneView
     {
         GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
 
@@ -28,6 +27,7 @@ namespace Assets.Code.Scenes
             pingText.text = string.Format(pingFormat, GameClient.Ping);
         }
 
+        [System.Obsolete]
         public override void Init(params object[] parameters)
         {
             Init();

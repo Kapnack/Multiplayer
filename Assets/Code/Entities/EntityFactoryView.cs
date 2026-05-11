@@ -1,9 +1,12 @@
-﻿using Assets.MultiplayerArchitecture.Code.Entities.Events;
+﻿using Assets.Code.Scenes;
+using Assets.MultiplayerArchitecture.Code.Entities;
 using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Dataflow;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
+using MultiplayerArchitecture;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
@@ -11,26 +14,65 @@ namespace Assets.Code.Entities
 {
     internal class EntityFactoryView : IInitable, IDisposable
     {
+        private delegate void ComponentAssigner(ViewComponent viewComponent);
+
         EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
         GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
         EntityRegistryView EntityRegistryView => ServiceProvider.Instance.GetService<EntityRegistryView>();
+        EntityRegistry EntityRegistry => ServiceProvider.Instance.GetService<EntityRegistry>();
+        BaseSceneView BaseSceneView => ServiceProvider.Instance.GetService<BaseSceneView>();
+
+        private Dictionary<Type, ComponentAssigner> componentAssigner;
+        private Dictionary<Type, GameObject> prefabsOfTypes;
 
         private GameObject usersPrefab;
         private Camera camera;
 
-        private MethodInfo setIntityID;
+        private MethodInfo registerEntityMethodView;
+        private MethodInfo registerEntityMethod;
+        private MethodInfo setEntityIdMethod;
 
         public EntityFactoryView(GameObject usersPrefab, Camera camera)
         {
             this.usersPrefab = usersPrefab;
             this.camera = camera;
 
-            setIntityID = typeof(EntityView).GetMethod(EntityView.SetIDName, BindingFlags.Instance | BindingFlags.NonPublic);
+            componentAssigner = new Dictionary<Type, ComponentAssigner>()
+            {
+                {typeof(Entity), PlayerComponents}
+            };
+
+            prefabsOfTypes = new Dictionary<Type, GameObject>()
+            {
+                { typeof(Entity), this.usersPrefab}
+            };
+
+            EventBus.Subscribe<EntityCreated<Entity>>(OnEntityCreated);
+
+            registerEntityMethod = EntityRegistry.GetType().GetMethod(EntityRegistry.RegisterMethodName, BindingFlags.NonPublic | BindingFlags.Instance);
+
+            registerEntityMethodView = EntityRegistryView.GetType().GetMethod(EntityRegistryView.RegisterMethodName,
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+            setEntityIdMethod = typeof(EntityView).GetMethod(EntityView.SetIDMethod,
+                BindingFlags.NonPublic | BindingFlags.Instance);
         }
 
+        [Obsolete]
         public void Init()
         {
-            EventBus.Subscribe<EntityCreated>(OnEntityCreated);
+            EntityView[] preLoadedEntities = UnityEngine.Object.FindObjectsOfType<EntityView>();
+
+            uint baseGameCurrentID = 0;
+
+            for (int i = 0; i < preLoadedEntities.Length; ++i)
+                SetUpPreloadedAssets(preLoadedEntities[i]);
+
+            void SetUpPreloadedAssets(EntityView preLoadedEntities)
+            {
+                setEntityIdMethod.Invoke(preLoadedEntities, new object[] { 0, ++baseGameCurrentID });
+                registerEntityMethodView.Invoke(EntityRegistryView, new object[] { preLoadedEntities });
+            }
         }
 
         public void LateInit()
@@ -38,30 +80,37 @@ namespace Assets.Code.Entities
 
         }
 
-        private void OnEntityCreated(in EntityCreated entityCreated)
+        private void OnEntityCreated(in EntityCreated<Entity> entityCreated)
         {
-            GameObject gameObject = UnityEngine.Object.Instantiate(usersPrefab);
+            Type entityType = EntityRegistry.Get<Entity>(entityCreated.ownerNetworkID, entityCreated.objectNetworkID).GetType();
+            string entityName = entityType.Name + "Owner: " + entityCreated.ownerNetworkID + "ObjectID: " + entityCreated.objectNetworkID;
 
-            gameObject.AddComponent<EntityView>();
+            ViewComponent viewComponent = BaseSceneView.AddSceneComponent(entityType, entityName, null, prefabsOfTypes.ContainsKey(entityType) ? prefabsOfTypes[entityType] : null);
 
-            EntityView entityView = gameObject.GetComponent<EntityView>();
+            setEntityIdMethod.Invoke(viewComponent, new object[] { entityCreated.ownerNetworkID, entityCreated.objectNetworkID });
 
-            setIntityID.Invoke(entityView, new object[] { entityCreated.objectID });
+            registerEntityMethodView.Invoke(EntityRegistryView, new object[] { viewComponent });
 
-            EntityRegistryView.OnEntityCreated(entityCreated.objectID, entityView);
+            viewComponent.transform.position = BaseSceneView.CoordinateToWorld(entityCreated.coordinate);
 
-            gameObject.AddComponent<Rigidbody>();
+            if (componentAssigner.TryGetValue(entityType, out ComponentAssigner assigner))
+                assigner(viewComponent);
+        }
 
-            Rigidbody rigidbody = gameObject.GetComponent<Rigidbody>();
+        private void PlayerComponents(ViewComponent viewComponent)
+        {
+            GameObject gameObject = viewComponent.gameObject;
+
+            Rigidbody rigidbody = gameObject.AddComponent<Rigidbody>();
 
             rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
             Renderer renderer = gameObject.GetComponentInChildren<Renderer>();
 
-            if (GameClient.MyID == entityCreated.networkClientID)
+            if (GameClient.MyID == (viewComponent as EntityView).OwnerNetworkID)
             {
                 renderer.material.color = Color.green;
-                gameObject.AddComponent<PlayerController>();
+                viewComponent.gameObject.AddComponent<PlayerController>();
                 camera.transform.parent = gameObject.transform;
 
                 camera.transform.localPosition = new Vector3(0, 5, -10);
@@ -75,7 +124,6 @@ namespace Assets.Code.Entities
 
         public void Dispose()
         {
-            EventBus.Unsubscribe<EntityCreated>(OnEntityCreated);
         }
     }
 }

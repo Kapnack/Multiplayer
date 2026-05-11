@@ -4,7 +4,7 @@ using ServerArquitecture.src;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.NetworkInformation;
+using System.Security.Cryptography;
 
 namespace KapNet
 {
@@ -36,8 +36,12 @@ namespace KapNet
 
         private bool isConnectedToMatchMaking = false;
 
+        private byte[] encryptorSeed;
+
         internal Server(string matchMakingIP, int portToConnect, int portToHost) : base()
         {
+            InitEncryption();
+
             PacketTypeStrategy.Add(PacketType.Data, HandleData);
 
             matchMakerData = new MatchMakerData();
@@ -54,9 +58,22 @@ namespace KapNet
 
         internal Server() : base()
         {
+            InitEncryption();
+
             PacketTypeStrategy.Add(PacketType.Data, HandleData);
 
             Connect(7777);
+        }
+
+        private void InitEncryption()
+        {
+            encryptorSeed = new byte[4];
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(encryptorSeed);
+            }
+
+            packetEncryptor = new PacketEncryptor(encryptorSeed);
         }
 
         public void Init()
@@ -157,10 +174,12 @@ namespace KapNet
 
             ServerConsole.Log($"Client connected: {networkPacket.ipEndPoint} ID: {newID}");
 
-            byte[] payload = new byte[sizeof(uint) * 2];
+            byte[] payload = new byte[sizeof(uint) * 2 + sizeof(int) + encryptorSeed.Length];
 
             BitConverter.GetBytes(0).CopyTo(payload, 0);
             BitConverter.GetBytes(newID).CopyTo(payload, sizeof(uint));
+            BitConverter.GetBytes(encryptorSeed.Length).CopyTo(payload, sizeof(uint) * 2);
+            encryptorSeed.CopyTo(payload, sizeof(uint) * 2 + sizeof(int));
 
             Send(networkPacket.ipEndPoint, PacketType.Handshake, payload, PacketMetaData.Reliable);
 

@@ -1,22 +1,26 @@
-﻿using ImageCampus.ToolBox.Events;
+﻿using Assets.MultiplayerArchitecture.Code.Entities;
+using ImageCampus.ToolBox.Events;
 
-namespace Assets.MultiplayerArchitecture.Code.Entities.Events
+namespace MultiplayerArchitecture
 {
-    public struct EntityCreated : IEvent
+    public struct EntityCreated<EntityType> : IEvent
     {
-        public uint networkClientID;
-        public uint objectID;
+        public uint ownerNetworkID;
+        public uint objectNetworkID;
+        public Coordinate coordinate;
 
         public void Assign(params object[] parameters)
         {
-            networkClientID = (uint)parameters[0];
-            objectID = (uint)parameters[1];
+            ownerNetworkID = (uint)parameters[0];
+            objectNetworkID = (uint)parameters[1];
+            coordinate = (Coordinate)parameters[2];
         }
 
         public void Reset()
         {
-            networkClientID = default(uint);
-            objectID = default(uint);
+            ownerNetworkID = default(uint);
+            objectNetworkID = default(uint);
+            coordinate = default(Coordinate);
         }
     }
 }

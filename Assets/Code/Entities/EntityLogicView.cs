@@ -8,11 +8,14 @@ namespace Assets.Code.Entities
         CarLogic carLogic;
         ItemBoxLogic itemBoxLogic;
 
-        public void Init()
+        public EntityLogicView()
         {
             carLogic = new CarLogic();
             itemBoxLogic = new ItemBoxLogic();
+        }
 
+        public void Init()
+        {
             carLogic.Init();
             itemBoxLogic.Init();
         }

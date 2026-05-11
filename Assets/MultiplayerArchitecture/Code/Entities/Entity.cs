@@ -1,15 +1,17 @@
 ﻿namespace Assets.MultiplayerArchitecture.Code.Entities
 {
-    internal class Entity
+    public class Entity
     {
+        public const uint UNASSIGNED_ENTITY_ID = 0;
         public Coordinate coordinate;
-        public uint ID;
-        public uint networkID;
+        public uint ownerNetworkID;
+        public uint objectNetworkID;
 
-        public Entity(uint ID, uint networkID)
+        public Entity(uint ownerNetworkID, uint objectNetworkID, Coordinate coordinate)
         {
-            this.ID = ID;
-            this.networkID = networkID;
+            this.ownerNetworkID = ownerNetworkID;
+            this.objectNetworkID = objectNetworkID;
+            this.coordinate = coordinate;
         }
     }
 }

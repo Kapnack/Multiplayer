@@ -15,24 +15,24 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
         public void Init()
         {
-            EventBus.Subscribe<NetworkClientMove>(OnEntityMove);
-            EventBus.Subscribe<PlayerMove>(OnPlayerMove);
+            EventBus.Subscribe<NetworkObjectMoveEvent>(OnEntityMove);
+            EventBus.Subscribe<LocalObjectMoveEvent>(OnPlayerMove);
             EventBus.Subscribe<ClientLeft>(OnClientLeft);
         }
 
         private void OnClientLeft(in ClientLeft clientLeft)
         {
-            EntityRegistry.Remove(clientLeft.objectID);
+            
         }
 
-        private void OnPlayerMove(in PlayerMove playerMove)
+        private void OnPlayerMove(in LocalObjectMoveEvent playerMove)
         {
-            EntityRegistry[GameClient[GameClient.MyID]].coordinate = playerMove.coordinate;
+            EntityRegistry[GameClient.MyID][1].coordinate = playerMove.coordinate;
 
             if (GameClient.MyID == 0)
                 return;
 
-            Coordinate currentPos = EntityRegistry[GameClient[GameClient.MyID]].coordinate;
+            Coordinate currentPos = EntityRegistry[GameClient.MyID][1].coordinate;
 
             byte[] payload = new byte[sizeof(uint) + sizeof(float) * 3];
 
@@ -54,15 +54,15 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
         }
 
-        private void OnEntityMove(in NetworkClientMove networkClientMove)
+        private void OnEntityMove(in NetworkObjectMoveEvent networkClientMove)
         {
-            EntityRegistry[GameClient[networkClientMove.networkID]].coordinate = networkClientMove.coordinate;
+            EntityRegistry[networkClientMove.ownerNetworkID][networkClientMove.objectNetworkID].coordinate = networkClientMove.coordinate;
         }
 
         public void Dispose()
         {
-            EventBus.Unsubscribe<NetworkClientMove>(OnEntityMove);
-            EventBus.Unsubscribe<PlayerMove>(OnPlayerMove);
+            EventBus.Unsubscribe<NetworkObjectMoveEvent>(OnEntityMove);
+            EventBus.Unsubscribe<LocalObjectMoveEvent>(OnPlayerMove);
             EventBus.Unsubscribe<ClientLeft>(OnClientLeft);
         }
     }

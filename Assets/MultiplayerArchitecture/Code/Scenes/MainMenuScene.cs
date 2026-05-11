@@ -23,9 +23,5 @@ namespace Assets.MultiplayerArchitecture.Code.Scenes
         {
             
         }
-
-        public override void Init(params object[] parameters)
-        {
-        }
     }
 }
