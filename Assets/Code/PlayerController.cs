@@ -1,15 +1,17 @@
-using Assets.MultiplayerArchitecture.Code.Entities;
+using Assets.Code;
+using Assets.Code.Entities;
 using Assets.MultiplayerArchitecture.Code.Entities.Events;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
+using MultiplayerArchitecture;
+using MultiplayerArchitecture.Entities;
 using UnityEngine;
+using ZooArchitect.View.Mapping;
 
-public class PlayerController : MonoBehaviour
+[ViewOf(typeof(Player))]
+public class PlayerController : EntityView
 {
     EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
-
-    private uint ownerNetworkObjectID;
-    private uint objectNetworkID;
 
     [SerializeField] private float acceleration = 20.0f;
     [SerializeField] private float maxSpeed = 20.0f;
@@ -18,25 +20,19 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody rb;
 
-    public string SetIDMethod => nameof(SetID);
-
-    private void SetID(uint ownerNetworkObjectID, uint objectNetworkID)
+    public override void Init()
     {
-        this.ownerNetworkObjectID = ownerNetworkObjectID;
-        this.objectNetworkID = objectNetworkID;
-    }
+        base.Init();
 
-    private void Awake()
-    {
         rb = GetComponent<Rigidbody>();
     }
 
-    private void FixedUpdate()
+    public override void Tick(float deltaTime)
     {
         Move();
-        Turn();
+        Turn(deltaTime);
         LimitSpeed();
-        SendMovementEvent();
+        SendMovementEvent(deltaTime);
     }
 
     private void Move()
@@ -51,14 +47,14 @@ public class PlayerController : MonoBehaviour
         rb.linearDamping = drag;
     }
 
-    private void Turn()
+    private void Turn(float deltaTime)
     {
         float input = Input.GetAxis("Horizontal");
 
         if (rb.linearVelocity.magnitude > 0.1f)
         {
             float speedFactor = rb.linearVelocity.magnitude / maxSpeed;
-            float turn = input * turnSpeed * speedFactor * Time.fixedDeltaTime;
+            float turn = input * turnSpeed * speedFactor * deltaTime;
 
             Quaternion rot = Quaternion.Euler(0f, turn, 0f);
             rb.MoveRotation(rb.rotation * rot);
@@ -73,15 +69,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void SendMovementEvent()
+    private void SendMovementEvent(float deltaTime)
     {
         Vector3 velocity = rb.linearVelocity;
 
         if (velocity.sqrMagnitude > Mathf.Epsilon)
         {
-            Vector3 newPos = transform.position + velocity * Time.fixedDeltaTime;
+            Vector3 newPos = transform.position + velocity * deltaTime;
 
-            EventBus.Raise<NetworkObjectMoveEvent>(ownerNetworkObjectID, objectNetworkID, new Coordinate(newPos.x, newPos.y, newPos.z));
+            EventBus.Raise<NetworkObjectMoveEvent>(OwnerNetworkID, ArchitectureID, new Coordinate(newPos.x, newPos.y, newPos.z));
         }
     }
 

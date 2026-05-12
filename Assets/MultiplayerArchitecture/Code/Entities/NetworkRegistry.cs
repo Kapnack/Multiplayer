@@ -1,6 +1,7 @@
 ﻿using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using MultiplayerArchitecture;
+using MultiplayerArchitecture.Entities;
 using System;
 using System.Collections.Generic;
 
@@ -51,10 +52,13 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
                     entityIdsPerType.Add(entity.ownerNetworkID, ownerTypesPerIDs);
                 }
 
-                if (!entityIdsPerType.ContainsKey(entity.ownerNetworkID))
-                    entityIdsPerType.Add(entity.ownerNetworkID, new Dictionary<Type, List<uint>>());
+                if (!ownerTypesPerIDs.TryGetValue(entity.GetType(), out List<uint> entityList))
+                {
+                    entityList = new List<uint>();
+                    ownerTypesPerIDs.Add(entity.GetType(), entityList);
+                }
 
-                entityIdsPerType[entity.ownerNetworkID][currentEntityType].Add(entity.objectNetworkID);
+                entityList.Add(entity.objectNetworkID);
 
             } while (currentEntityType != typeof(Entity));
         }
@@ -62,7 +66,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
         public EntityType Get<EntityType>(uint ownerNetworkID, uint objectNetworkID) where EntityType : Entity
         {
-            return (EntityType)entities[ownerNetworkID][ownerNetworkID];
+            return (EntityType)entities[ownerNetworkID][objectNetworkID];
         }
 
         public Entity Get(uint ownerNetworkID, uint objectNetworkID)

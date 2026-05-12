@@ -28,6 +28,7 @@ namespace Assets.Code.Entities
 
         public void Tick(float deltaTime)
         {
+            carLogic.Tick(deltaTime);
             itemBoxLogic.Tick(deltaTime);
         }
 

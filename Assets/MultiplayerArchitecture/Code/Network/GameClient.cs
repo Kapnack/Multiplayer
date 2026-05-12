@@ -4,6 +4,8 @@ using ImageCampus.ToolBox.Dataflow;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using KapNet;
+using MultiplayerArchitecture;
+using MultiplayerArchitecture.Entities;
 using System;
 
 namespace Assets.MultiplayerArchitecture.Code.Network
@@ -29,7 +31,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
         public void Tick(float deltaTime)
         {
-            connection.Tick(deltaTime);
+           // connection.Tick(deltaTime);
         }
 
         public void LateInit()
@@ -44,7 +46,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
         public void OnClienJoined(uint clientID)
         {
-            EventBus.Raise<CreateRemoteEntity>(clientID, EntityType.Player, 1);
+            EventBus.Raise<SpawnRequestAcceptedEvent<Player>>(clientID, 1);
         }
 
         public void OnClientLeft(uint clientID)
@@ -56,7 +58,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         {
             MyID = myID;
 
-            EventBus.Raise<CreateEntity>(MyID, EntityType.Player);
+            EventBus.Raise<SpawnRequestAcceptedEvent>(MyID, 1);
         }
 
         public void OnPayloadRecieve(byte[] payload, uint clientID)

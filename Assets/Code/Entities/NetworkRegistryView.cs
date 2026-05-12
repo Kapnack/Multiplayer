@@ -1,7 +1,9 @@
 ﻿using Assets.MultiplayerArchitecture.Code.Entities;
+using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using MultiplayerArchitecture;
+using MultiplayerArchitecture.Entities;
 using System;
 using System.Collections.Generic;
 
@@ -10,6 +12,7 @@ namespace Assets.Code.Entities
     internal class NetworkRegistryView : IService
     {
         EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
+        GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
 
         public bool IsPersistance => false;
 
@@ -18,6 +21,8 @@ namespace Assets.Code.Entities
         private Dictionary<uint, Dictionary<Type, List<uint>>> entityIdsPerType;
         internal EntityView Get(uint ownerNetworkID, uint objectNetworkID) => entities[ownerNetworkID][objectNetworkID];
 
+        public IEnumerable<PlayerController> PlayerView(uint ownerNetworkID) => FilterEntities<PlayerController>(ownerNetworkID);
+
         public EntityType GetAs<EntityType>(uint ownerNetworkID, uint objectNetworkID) where EntityType : EntityView
         {
             if (objectNetworkID == Entity.UNASSIGNED_ENTITY_ID)
@@ -25,7 +30,7 @@ namespace Assets.Code.Entities
 
             if (!entities.TryGetValue(ownerNetworkID, out Dictionary<uint, EntityView> entitiesOfOwner))
                 throw new KeyNotFoundException("Owner: " + ownerNetworkID.ToString());
-            
+
             if (entitiesOfOwner.ContainsKey(objectNetworkID))
                 throw new KeyNotFoundException("Object: " + objectNetworkID.ToString());
 
@@ -55,13 +60,14 @@ namespace Assets.Code.Entities
 
             entities[entityView.OwnerNetworkID].Add(entityView.ArchitectureID, entityView);
 
-            Type currentEntityType = entityView.GetType();
 
             if (!entityIdsPerType.TryGetValue(entityView.OwnerNetworkID, out Dictionary<Type, List<uint>> entityOwnerIdsPerType))
             {
                 entityOwnerIdsPerType = new Dictionary<Type, List<uint>>();
                 entityIdsPerType.Add(entityView.OwnerNetworkID, entityOwnerIdsPerType);
             }
+
+            Type currentEntityType = null;
 
             do
             {
@@ -73,6 +79,12 @@ namespace Assets.Code.Entities
                 entityOwnerIdsPerType[currentEntityType].Add(entityView.ArchitectureID);
 
             } while (currentEntityType != typeof(EntityView));
+        }
+
+        private IEnumerable<EntityType> FilterEntities<EntityType>(uint ownerNetworkID) where EntityType : EntityView
+        {
+            foreach (uint objectNetworkID in entityIdsPerType[ownerNetworkID][typeof(EntityType)])
+               yield return entities[ownerNetworkID][objectNetworkID] as EntityType;
         }
 
         private void OnEntityDestroyed(in EntityDestroyedEvent entityDestroyedEvent)

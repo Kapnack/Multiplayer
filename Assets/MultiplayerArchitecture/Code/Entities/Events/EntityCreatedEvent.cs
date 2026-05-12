@@ -3,7 +3,7 @@ using ImageCampus.ToolBox.Events;
 
 namespace MultiplayerArchitecture
 {
-    public struct EntityCreated<EntityType> : IEvent
+    public struct EntityCreatedEvent<EntityType> : IEvent
     {
         public uint ownerNetworkID;
         public uint objectNetworkID;

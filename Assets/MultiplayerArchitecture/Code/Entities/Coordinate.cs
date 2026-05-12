@@ -1,4 +1,4 @@
-﻿namespace Assets.MultiplayerArchitecture.Code.Entities
+﻿namespace MultiplayerArchitecture
 {
     public struct Coordinate
     {

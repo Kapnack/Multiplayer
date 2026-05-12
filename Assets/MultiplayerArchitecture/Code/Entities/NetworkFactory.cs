@@ -2,13 +2,14 @@
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using MultiplayerArchitecture;
+using MultiplayerArchitecture.Entities;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 
 namespace Assets.MultiplayerArchitecture.Code.Entities
 {
-    internal class NetworkFactory : IService, IDisposable
+    public class NetworkFactory : IService, IDisposable
     {
         private delegate void OnCreateEntity(uint ownerNetworkID, uint objectNetworkID);
 
@@ -59,6 +60,18 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
             object newEntity = entityConstructors[typeof(EntityType)].Invoke(new object[] { ownerNetworkID, objectNetworkID, coordinate });
 
             registerNetworkObjectMethod.Invoke(NetworkRegistry, new object[] { newEntity });
+
+            List<Type> entityTypes = new List<Type>();
+            Type currentType = null;
+
+            do
+            {
+                currentType = currentType == null ? newEntity.GetType() : currentType.BaseType;
+                entityTypes.Add(currentType);
+            } while (currentType != typeof(Entity));
+
+            for (int i = entityTypes.Count - 1; i >= 0; i--)
+                raiseEntityCreatedMethod.MakeGenericMethod(entityTypes[i]).Invoke(this, new object[] { newEntity });
         }
 
         private void RaseEntityRequestAccepted<EntityType>(SpawnRequestAcceptedEvent spawnRequestAcceptedEvent) where EntityType : Entity
@@ -80,7 +93,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
         private void RaiseEntityCreated<EntityType>(EntityType newEntity) where EntityType : Entity
         {
-            EventBus.Raise<EntityCreated<EntityType>>(newEntity.ownerNetworkID, newEntity.objectNetworkID, newEntity.coordinate);
+            EventBus.Raise<EntityCreatedEvent<EntityType>>(newEntity.ownerNetworkID, newEntity.objectNetworkID, newEntity.coordinate);
         }
 
         private void RegisterEntityMethods()
@@ -103,7 +116,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
                 foreach (ConstructorInfo constructor in entityType.GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance))
                 {
                     ParameterInfo[] parameters = constructor.GetParameters();
-                    if (parameters.Length == 2 &&
+                    if (parameters.Length == 3 &&
                         parameters[0].ParameterType == typeof(uint) &&
                         parameters[1].ParameterType == typeof(uint) &&
                         parameters[2].ParameterType == typeof(Coordinate))

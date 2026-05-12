@@ -3,6 +3,7 @@ using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Dataflow;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
+using MultiplayerArchitecture;
 using System;
 
 namespace Assets.MultiplayerArchitecture.Code.Entities

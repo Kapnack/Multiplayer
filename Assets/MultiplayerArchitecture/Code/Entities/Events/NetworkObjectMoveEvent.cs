@@ -1,4 +1,5 @@
 ﻿using ImageCampus.ToolBox.Events;
+using MultiplayerArchitecture;
 
 namespace Assets.MultiplayerArchitecture.Code.Entities.Events
 {

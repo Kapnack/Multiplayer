@@ -1,7 +1,8 @@
-using Assets.Code.Entities;
+using Assets.MultiplayerArchitecture.Code.Entities;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
-using UnityEngine;
+using MultiplayerArchitecture;
+using MultiplayerArchitecture.Entities;
 
 public struct IteamBoxCollectedEvent : IEvent
 {
@@ -27,19 +28,11 @@ public struct IteamBoxCollectedEvent : IEvent
     }
 }
 
-internal class IteamBox : EntityView
+public class ItemBox : Entity
 {
     EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
-    public IteamBox() : base()
+    private ItemBox(uint ownerNetworkID, uint objectNetworkID, Coordinate coordinate) : base(ownerNetworkID, objectNetworkID, coordinate)
     {
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.collider.TryGetComponent<EntityView>(out EntityView entityView))
-            return;
-
-        EventBus.Raise<IteamBoxCollectedEvent>(OwnerNetworkID, ArchitectureID, entityView.OwnerNetworkID, entityView.ArchitectureID);
     }
 }

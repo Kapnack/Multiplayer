@@ -1,6 +1,10 @@
 ﻿using Assets.Code.Entities;
+using Assets.MultiplayerArchitecture.Code.Entities;
 using Assets.MultiplayerArchitecture.Code.Network;
+using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
+using MultiplayerArchitecture;
+using MultiplayerArchitecture.Entities;
 using TMPro;
 using UnityEngine;
 
@@ -9,6 +13,7 @@ namespace Assets.Code.Scenes
     internal class GameplayViewScene : BaseSceneView
     {
         GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
+        EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
         private NetworkFactoryView entityFactoryView;
         private EntityLogicView entityLogicView;
@@ -40,6 +45,8 @@ namespace Assets.Code.Scenes
         {
             entityFactoryView.LateInit();
             entityLogicView.LateInit();
+
+            EventBus.Raise<SpawnRequestAcceptedEvent<Player>>(GameClient.MyID, 7u, new Coordinate(0, 0, 0));
         }
 
         public override void Tick(float deltaTime)

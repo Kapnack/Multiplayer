@@ -9,6 +9,7 @@ using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using ZooArchitect.View.Mapping;
 
 namespace Assets.Code
 {
@@ -37,10 +38,11 @@ namespace Assets.Code
             mapsByEnum = new Dictionary<Maps, GameObject>();
         }
 
-
         private void Awake()
         {
             uint currentMapIterator = 0;
+
+            ViewArchitectureMap.Init();
 
             foreach (object mapEnum in Enum.GetValues(typeof(Maps)))
                 mapsByEnum.Add((Maps)mapEnum, currentMapIterator == maps.Length ? maps[currentMapIterator - 1] : maps[currentMapIterator++]);

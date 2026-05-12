@@ -1,4 +1,5 @@
 ﻿using ImageCampus.ToolBox.Events;
+using MultiplayerArchitecture;
 
 namespace Assets.MultiplayerArchitecture.Code.Entities
 {
@@ -9,8 +10,8 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
         public void Assign(params object[] parameters)
         {
-            objectNetworkID = (uint)parameters[1];
-            coordinate = (Coordinate)parameters[0];
+            objectNetworkID = (uint)parameters[0];
+            coordinate = (Coordinate)parameters[1];
         }
 
         public void Reset()

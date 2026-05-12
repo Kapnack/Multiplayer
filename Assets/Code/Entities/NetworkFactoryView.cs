@@ -5,10 +5,12 @@ using ImageCampus.ToolBox.Dataflow;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using MultiplayerArchitecture;
+using MultiplayerArchitecture.Entities;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using ZooArchitect.View.Mapping;
 
 namespace Assets.Code.Entities
 {
@@ -39,15 +41,13 @@ namespace Assets.Code.Entities
 
             componentAssigner = new Dictionary<Type, ComponentAssigner>()
             {
-                {typeof(Entity), PlayerComponents}
+                {typeof(Player), PlayerComponents}
             };
 
             prefabsOfTypes = new Dictionary<Type, GameObject>()
             {
-                { typeof(Entity), this.usersPrefab}
+                { typeof(Player), this.usersPrefab}
             };
-
-            EventBus.Subscribe<EntityCreated<Entity>>(OnEntityCreated);
 
             registerEntityMethod = EntityRegistry.GetType().GetMethod(EntityRegistry.RegisterMethodName, BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -62,30 +62,47 @@ namespace Assets.Code.Entities
         public void Init()
         {
             EntityView[] preLoadedEntities = UnityEngine.Object.FindObjectsOfType<EntityView>();
-
             uint baseGameCurrentID = 0;
 
-            for (int i = 0; i < preLoadedEntities.Length; ++i)
-                SetUpPreloadedAssets(preLoadedEntities[i]);
+            Type architectureType;
 
-            void SetUpPreloadedAssets(EntityView preLoadedEntities)
+            for (int i = 0; i < preLoadedEntities.Length; ++i)
             {
-                setEntityIdMethod.Invoke(preLoadedEntities, new object[] { 0u, ++baseGameCurrentID });
-                registerEntityMethodView.Invoke(EntityRegistryView, new object[] { preLoadedEntities });
+                architectureType = ViewArchitectureMap.ArchitectureOf(preLoadedEntities[i].GetType());
+
+                SetUpPreloadedAssets(preLoadedEntities[i], architectureType, ++baseGameCurrentID);
+            }
+
+            void SetUpPreloadedAssets(EntityView view, Type entityType, uint currentObjectID)
+            {
+                const uint networkOwnerID = 0u;
+                Coordinate coord = BaseSceneView.WorldToCoordinate(view.transform.position);
+
+                Type openEventType = typeof(SpawnRequestAcceptedEvent<>);
+                Type closedEventType = openEventType.MakeGenericType(entityType);
+
+                MethodInfo raiseMethod = typeof(EventBus).GetMethod("Raise")
+                    .MakeGenericMethod(closedEventType);
+
+                object[] eventParams = new object[] { networkOwnerID, currentObjectID, coord };
+                raiseMethod.Invoke(EventBus, new object[] { eventParams });
+
+                setEntityIdMethod.Invoke(view, new object[] { networkOwnerID, currentObjectID });
+                registerEntityMethodView.Invoke(EntityRegistryView, new object[] { view });
             }
         }
 
         public void LateInit()
         {
-
+            EventBus.Subscribe<EntityCreatedEvent<Entity>>(OnEntityCreated);
         }
 
-        private void OnEntityCreated(in EntityCreated<Entity> entityCreated)
+        private void OnEntityCreated(in EntityCreatedEvent<Entity> entityCreated)
         {
             Type entityType = EntityRegistry.Get<Entity>(entityCreated.ownerNetworkID, entityCreated.objectNetworkID).GetType();
             string entityName = entityType.Name + "Owner: " + entityCreated.ownerNetworkID + "ObjectID: " + entityCreated.objectNetworkID;
 
-            ViewComponent viewComponent = BaseSceneView.AddSceneComponent(entityType, entityName, null, prefabsOfTypes.ContainsKey(entityType) ? prefabsOfTypes[entityType] : null);
+            ViewComponent viewComponent = BaseSceneView.AddSceneComponent(ViewArchitectureMap.ViewOf(entityType), entityName, null, prefabsOfTypes.ContainsKey(entityType) ? prefabsOfTypes[entityType] : null);
 
             setEntityIdMethod.Invoke(viewComponent, new object[] { entityCreated.ownerNetworkID, entityCreated.objectNetworkID });
 
@@ -95,6 +112,9 @@ namespace Assets.Code.Entities
 
             if (componentAssigner.TryGetValue(entityType, out ComponentAssigner assigner))
                 assigner(viewComponent);
+
+            viewComponent.Init();
+            viewComponent.LateInit();
         }
 
         private void PlayerComponents(ViewComponent viewComponent)
@@ -110,9 +130,8 @@ namespace Assets.Code.Entities
             if (GameClient.MyID == (viewComponent as EntityView).OwnerNetworkID)
             {
                 renderer.material.color = Color.green;
-                viewComponent.gameObject.AddComponent<PlayerController>();
-                camera.transform.parent = gameObject.transform;
 
+                camera.transform.parent = gameObject.transform;
                 camera.transform.localPosition = new Vector3(0, 5, -10);
                 camera.transform.LookAt(gameObject.transform);
             }
@@ -124,6 +143,7 @@ namespace Assets.Code.Entities
 
         public void Dispose()
         {
+            EventBus.Unsubscribe<EntityCreatedEvent<Entity>>(OnEntityCreated);
         }
     }
 }

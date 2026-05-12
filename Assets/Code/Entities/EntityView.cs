@@ -1,13 +1,16 @@
 ﻿using Assets.MultiplayerArchitecture.Code.Entities;
 using ImageCampus.ToolBox.Services;
+using MultiplayerArchitecture.Entities;
+using ZooArchitect.View.Mapping;
 
 namespace Assets.Code.Entities
 {
-    internal class EntityView : ViewComponent
+    [ViewOf(typeof(Entity))]
+    public class EntityView : ViewComponent
     {
         protected NetworkRegistry EntityRegistry => ServiceProvider.Instance.GetService<NetworkRegistry>();
-        public uint OwnerNetworkID { get; private set; }
-        public uint ArchitectureID { get; private set; }
+        public uint OwnerNetworkID;
+        public uint ArchitectureID;
 
         static public string SetIDMethod => nameof(SetID);
 

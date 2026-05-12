@@ -63,7 +63,7 @@ namespace Assets.Code
 
             BitConverter.GetBytes(mapID).CopyTo(payload, 0);
 
-            GameClient.connection.SendHandshake(new byte[0]);
+            //GameClient.connection.SendHandshake(new byte[0]);
         }
 
         private void OnConnectToMap1()

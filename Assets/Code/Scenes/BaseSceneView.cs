@@ -1,4 +1,5 @@
 ﻿using Assets.MultiplayerArchitecture.Code.Entities;
+using MultiplayerArchitecture;
 using MultiplayerArchitecture.Code.Scenes;
 using MultiplayerView;
 using System;
@@ -31,6 +32,11 @@ namespace Assets.Code.Scenes
         public Vector3 CoordinateToWorld(Coordinate coordinate)
         {
             return new Vector3(coordinate.x, coordinate.y, coordinate.z);
+        }
+
+        public Coordinate WorldToCoordinate(Vector3 coordinate)
+        {
+            return new Coordinate(coordinate.x, coordinate.y, coordinate.z);
         }
 
         public static Container GetContainer(ViewComponent component)

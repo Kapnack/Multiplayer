@@ -1,4 +1,4 @@
-﻿namespace Assets.MultiplayerArchitecture.Code.Entities
+﻿namespace MultiplayerArchitecture.Entities
 {
     public class Entity
     {
@@ -7,7 +7,7 @@
         public uint ownerNetworkID;
         public uint objectNetworkID;
 
-        public Entity(uint ownerNetworkID, uint objectNetworkID, Coordinate coordinate)
+        protected Entity(uint ownerNetworkID, uint objectNetworkID, Coordinate coordinate)
         {
             this.ownerNetworkID = ownerNetworkID;
             this.objectNetworkID = objectNetworkID;
