@@ -11,7 +11,7 @@ namespace Assets.Code.Entities
     {
         EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
-        EntityRegistryView EntityRegistryView => ServiceProvider.Instance.GetService<EntityRegistryView>();
+        NetworkRegistryView EntityRegistryView => ServiceProvider.Instance.GetService<NetworkRegistryView>();
 
         public void Init()
         {
