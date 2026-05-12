@@ -69,8 +69,8 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
     {
         byte[] newPayload = new byte[sizeof(uint) + sizeof(ConnectionRole) + payload.Length];
 
-        BitConverter.GetBytes(MyID).CopyTo(payload, 0);
-        payload[sizeof(uint)] = (byte)ConnectionRole.Client;
+        BitConverter.GetBytes(MyID).CopyTo(newPayload, 0);
+        newPayload[sizeof(uint)] = (byte)ConnectionRole.Client;
         Buffer.BlockCopy(payload, 0, newPayload, sizeof(uint) + sizeof(ConnectionRole), payload.Length);
 
         Send(PacketType.Handshake, newPayload, PacketMetaData.Reliable);
