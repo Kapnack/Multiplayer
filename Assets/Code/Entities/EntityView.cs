@@ -5,7 +5,7 @@ namespace Assets.Code.Entities
 {
     internal class EntityView : ViewComponent
     {
-        protected EntityRegistry EntityRegistry => ServiceProvider.Instance.GetService<EntityRegistry>();
+        protected NetworkRegistry EntityRegistry => ServiceProvider.Instance.GetService<NetworkRegistry>();
         public uint OwnerNetworkID { get; private set; }
         public uint ArchitectureID { get; private set; }
 

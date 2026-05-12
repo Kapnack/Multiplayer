@@ -10,31 +10,27 @@ namespace Assets.Code.Scenes
     {
         GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
 
-        private EntityFactoryView entityFactoryView;
+        private NetworkFactoryView entityFactoryView;
         private EntityLogicView entityLogicView;
         private TMP_Text pingText;
 
         private string pingFormat;
 
-        public GameplayViewScene(TMP_Text pingText)
+        public GameplayViewScene(GameObject selectedMap, TMP_Text pingText, GameObject userPrefabs, Camera camera)
         {
+            ServiceProvider.Instance.AddService<NetworkRegistryView>(new NetworkRegistryView());
+
             this.pingText = pingText;
+            Object.Instantiate(selectedMap);
+
+            entityFactoryView = new NetworkFactoryView(userPrefabs, camera);
+            entityLogicView = new EntityLogicView();
         }
 
         public override void Init()
         {
             pingFormat = pingText.text;
             pingText.text = string.Format(pingFormat, GameClient.Ping);
-        }
-
-        [System.Obsolete]
-        public override void Init(params object[] parameters)
-        {
-            Init();
-
-            ServiceProvider.Instance.AddService<EntityRegistryView>(new EntityRegistryView());
-            entityFactoryView = new EntityFactoryView((GameObject)parameters[0], (Camera)parameters[1]);
-            entityLogicView = new EntityLogicView();
 
             entityFactoryView.Init();
             entityLogicView.Init();
@@ -57,7 +53,7 @@ namespace Assets.Code.Scenes
         {
             entityLogicView.Dispose();
             entityFactoryView.Dispose();
-            ServiceProvider.Instance.RemoveService<EntityRegistryView>();
+            ServiceProvider.Instance.RemoveService<NetworkRegistryView>();
         }
     }
 }

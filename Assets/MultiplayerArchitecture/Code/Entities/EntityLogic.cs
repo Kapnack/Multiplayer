@@ -11,7 +11,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
     {
         EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
         GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
-        EntityRegistry EntityRegistry => ServiceProvider.Instance.GetService<EntityRegistry>();
+        NetworkRegistry EntityRegistry => ServiceProvider.Instance.GetService<NetworkRegistry>();
 
         public void Init()
         {

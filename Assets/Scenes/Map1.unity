@@ -149,10 +149,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Code.View
   usersPrefabs: {fileID: 3521440486679471687, guid: 7415d972fc19cb54fa3069960ac4bb46, type: 3}
-  map1: {fileID: 566264369926295140, guid: 4f1c9b4cd9387964ebb799db4f285d1d, type: 3}
-  map2: {fileID: 0}
+  maps:
+  - {fileID: 566264369926295140, guid: 4f1c9b4cd9387964ebb799db4f285d1d, type: 3}
   cam: {fileID: 2121750344}
   pingText: {fileID: 1064875391}
+  nameText: {fileID: 1031031400}
+  levelText: {fileID: 1330774470}
+  ip: {fileID: 1867473273}
+  connect: {fileID: 1084864896}
+  connect2: {fileID: 1084864896}
 --- !u!4 &38410535
 Transform:
   m_ObjectHideFlags: 0
@@ -1805,11 +1810,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91ae84055f98da14d8b4494308922926, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  nameText: {fileID: 1031031400}
-  levelText: {fileID: 1330774470}
-  ip: {fileID: 1867473273}
-  port: {fileID: 0}
-  connect: {fileID: 1084864896}
 --- !u!114 &1365236283
 MonoBehaviour:
   m_ObjectHideFlags: 0

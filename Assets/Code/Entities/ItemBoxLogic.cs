@@ -25,7 +25,7 @@ namespace Assets.Code.Entities
     internal class ItemBoxLogic : IInitable, ITickable, IDisposable
     {
         private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
-        private EntityRegistryView EntityRegistryView => ServiceProvider.Instance.GetService<EntityRegistryView>();
+        private NetworkRegistryView EntityRegistryView => ServiceProvider.Instance.GetService<NetworkRegistryView>();
 
         private List<ItemBoxOnCooldown> itemBoxesOnCooldown;
 

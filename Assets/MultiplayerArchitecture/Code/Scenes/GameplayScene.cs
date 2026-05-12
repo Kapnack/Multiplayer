@@ -7,25 +7,21 @@ namespace MultiplayerArchitecture.Code.Scenes
 {
     internal class GameplayScene : BaseScene
     {
-        EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
         GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
-        EntityFactory EntityFactory => ServiceProvider.Instance.GetService<EntityFactory>();
+        NetworkFactory NetworkFactory => ServiceProvider.Instance.GetService<NetworkFactory>();
 
         EntityLogic entityLogic;
 
         public override void Init()
         {
-            ServiceProvider.Instance.AddService<EntityRegistry>(new EntityRegistry());
-            ServiceProvider.Instance.AddService<EntityFactory>(new EntityFactory());
+            ServiceProvider.Instance.AddService<NetworkRegistry>(new NetworkRegistry());
+            ServiceProvider.Instance.AddService<NetworkFactory>(new NetworkFactory());
             ServiceProvider.Instance.AddService<GameClient>(new GameClient());
 
             entityLogic = new EntityLogic(); 
 
             GameClient.Init();
             entityLogic.Init();
-
-            GameClient.connection.Connect("127.0.0.1", 7777);
-            GameClient.connection.SendHandshake(new byte[0]);
         }
 
         public override void LateInit()
@@ -43,7 +39,7 @@ namespace MultiplayerArchitecture.Code.Scenes
         public override void Dispose()
         {
             entityLogic.Dispose();
-            EntityFactory.Dispose();
+            NetworkFactory.Dispose();
             GameClient.Dispose();
 
             ServiceProvider.Instance.ClearAllNonPersistanceServices();

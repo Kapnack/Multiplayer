@@ -8,8 +8,6 @@ namespace Assets.Code.Scenes
 {
     internal abstract class BaseSceneView : BaseScene
     {
-        public abstract void Init(params object[] parameters);
-
         public static ViewComponent AddSceneComponent(Type viewComponentType, string name, Transform parent = null, GameObject prefab = null)
         {
             if (!typeof(ViewComponent).IsAssignableFrom(viewComponentType))

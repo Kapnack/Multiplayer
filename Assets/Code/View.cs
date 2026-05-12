@@ -1,7 +1,12 @@
 ﻿using Assets.Code.Scenes;
+using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
+using MultiplayerArchitecture;
 using MultiplayerArchitecture.Code.Scenes;
+using System;
+using System.Collections.Generic;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,12 +15,12 @@ namespace Assets.Code
     public class View : MonoBehaviour
     {
         private Multiplayer.Arch.MultiplayerArchitecture multiplayerArchitecture;
-
+        private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
         private BaseSceneView CurrentScene => ServiceProvider.Instance.GetService<BaseSceneView>();
+        private MapToLoad MapToLoad => ServiceProvider.Instance.GetService<MapToLoad>();
 
         [SerializeField] private GameObject usersPrefabs;
-        [SerializeField] private GameObject map1;
-        [SerializeField] private GameObject map2;
+        [SerializeField] private GameObject[] maps;
         [SerializeField] private Camera cam;
         [SerializeField] private TMP_Text pingText;
 
@@ -23,24 +28,46 @@ namespace Assets.Code
         [SerializeField] private InputField levelText;
         [SerializeField] private InputField ip;
         [SerializeField] private Button connect;
+        [SerializeField] private Button connect2;
+
+        private Dictionary<Maps, GameObject> mapsByEnum;
+
+        public View()
+        {
+            mapsByEnum = new Dictionary<Maps, GameObject>();
+        }
+
 
         private void Awake()
         {
+            uint currentMapIterator = 0;
+
+            foreach (object mapEnum in Enum.GetValues(typeof(Maps)))
+                mapsByEnum.Add((Maps)mapEnum, currentMapIterator == maps.Length ? maps[currentMapIterator - 1] : maps[currentMapIterator++]);
+
+            ServiceProvider.Instance.AddService<MapToLoad>(new MapToLoad());
+
+            pingText.gameObject.SetActive(false);
+            pingText.gameObject.SetActive(false);
+            nameText.gameObject.SetActive(false);
+            levelText.gameObject.SetActive(false);
+            ip.gameObject.SetActive(false);
+            connect.gameObject.SetActive(false);
+            connect2.gameObject.SetActive(false);
+
             Application.runInBackground = true;
             Screen.SetResolution(800, 600, false);
-
-            ServiceProvider.Instance.AddService<BaseScene>(new MainMenuViewScene());
 
             multiplayerArchitecture = new Multiplayer.Arch.MultiplayerArchitecture();
 
             multiplayerArchitecture.Init();
-            CurrentScene.Init(nameText, levelText, ip, connect);
+
+            EventBus.Subscribe<ChangeSceneEvent>(OnSceneChange);
         }
 
         private void Start()
         {
             multiplayerArchitecture.LateInit();
-            CurrentScene.LateInit();
         }
 
         private void Update()
@@ -52,7 +79,25 @@ namespace Assets.Code
 
         private void OnApplicationQuit()
         {
+            EventBus.Unsubscribe<ChangeSceneEvent>(OnSceneChange);
             CurrentScene.Dispose();
+            ServiceProvider.Instance.ClearAllServices();
+        }
+
+        private void OnSceneChange(in ChangeSceneEvent changeSceneEvent)
+        {
+            if (ServiceProvider.Instance.ContainsService<BaseSceneView>())
+            {
+                CurrentScene.Dispose();
+                ServiceProvider.Instance.RemoveService<BaseSceneView>();
+            }
+
+            ServiceProvider.Instance.AddService<BaseSceneView>(changeSceneEvent.scene == Scene.MainMenu ?
+                new MainMenuViewScene(nameText, ip, levelText, connect, connect2) :
+                new GameplayViewScene(mapsByEnum[MapToLoad.mapToLoad], pingText, usersPrefabs, cam));
+
+            CurrentScene.Init();
+            CurrentScene.LateInit();
         }
     }
 }
