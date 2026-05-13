@@ -46,10 +46,10 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
             RegisterEntityMethods();
 
-            EventBus.Subscribe<SpawnRequestAcceptedEvent>(RaiseEventAsGeneric);
+            EventBus.Subscribe<NetworkSpawnRequestAcceptedEvent>(RaiseEventAsGeneric);
         }
 
-        private void RaiseEventAsGeneric(in SpawnRequestAcceptedEvent spawnRequestAcceptedEvent)
+        private void RaiseEventAsGeneric(in NetworkSpawnRequestAcceptedEvent spawnRequestAcceptedEvent)
         {
             Type raisingType = entityClassNameToType[spawnRequestAcceptedEvent.entityTypeName];
             raiseEntityRequestAcceptedMethd.MakeGenericMethod(raisingType).Invoke(this, new object[] { spawnRequestAcceptedEvent });
@@ -74,20 +74,28 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
                 raiseEntityCreatedMethod.MakeGenericMethod(entityTypes[i]).Invoke(this, new object[] { newEntity });
         }
 
-        private void RaseEntityRequestAccepted<EntityType>(SpawnRequestAcceptedEvent spawnRequestAcceptedEvent) where EntityType : Entity
+        private void RaseEntityRequestAccepted<EntityType>(NetworkSpawnRequestAcceptedEvent spawnRequestAcceptedEvent) where EntityType : Entity
         {
-            EventBus.Raise<SpawnRequestAcceptedEvent<EntityType>>(spawnRequestAcceptedEvent.coordinateToSpawn, spawnRequestAcceptedEvent.entityTypeName);
+            EventBus.Raise<NetworkSpawnRequestAcceptedEvent<EntityType>>(spawnRequestAcceptedEvent.coordinateToSpawn, spawnRequestAcceptedEvent.entityTypeName);
         }
 
         private void SubscribeToCreation<EntityType>() where EntityType : Entity
         {
-            EventBus.EventCallback<SpawnRequestAcceptedEvent<EntityType>> callback =
-                EventBus.SubscribeAndReturn<SpawnRequestAcceptedEvent<EntityType>>(SpawnEntity);
-            creationSubsctiptions.Add(typeof(SpawnRequestAcceptedEvent<EntityType>), callback);
+            EventBus.EventCallback<NetworkSpawnRequestAcceptedEvent<EntityType>> callback =
+                EventBus.SubscribeAndReturn<NetworkSpawnRequestAcceptedEvent<EntityType>>(NetworkSpawnEntity);
+            creationSubsctiptions.Add(typeof(NetworkSpawnRequestAcceptedEvent<EntityType>), callback);
 
-            void SpawnEntity(in SpawnRequestAcceptedEvent<EntityType> spawnRequestAcceptedEvent)
+            void NetworkSpawnEntity(in NetworkSpawnRequestAcceptedEvent<EntityType> spawnRequestAcceptedEvent)
             {
                 CreateInstance<EntityType>(spawnRequestAcceptedEvent.ownerNetworkID, spawnRequestAcceptedEvent.objectNetworkID, spawnRequestAcceptedEvent.coordinateToSpawn);
+            }
+
+            EventBus.EventCallback<LocalSpawnRequestAcceptedEvent<EntityType>> localCallback = EventBus.SubscribeAndReturn<LocalSpawnRequestAcceptedEvent<EntityType>>(SpawnEntity);
+            creationSubsctiptions.Add(typeof(LocalSpawnRequestAcceptedEvent<EntityType>), localCallback);
+
+            void SpawnEntity(in LocalSpawnRequestAcceptedEvent<EntityType> spawnRequestAcceptedEvent)
+            {
+                CreateInstance<EntityType>(spawnRequestAcceptedEvent.ownerNetworkID, ++currentEntityID, spawnRequestAcceptedEvent.coordinateToSpawn);
             }
         }
 
@@ -140,7 +148,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
         public void Dispose()
         {
             UnsubscribeToCreation();
-            EventBus.Unsubscribe<SpawnRequestAcceptedEvent>(RaiseEventAsGeneric);
+            EventBus.Unsubscribe<NetworkSpawnRequestAcceptedEvent>(RaiseEventAsGeneric);
         }
     }
 }

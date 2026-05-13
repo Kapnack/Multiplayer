@@ -1,5 +1,6 @@
 ﻿using Assets.Code.Entities;
 using Assets.MultiplayerArchitecture.Code.Entities;
+using Assets.MultiplayerArchitecture.Code.Entities.ItemBox;
 using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
@@ -46,7 +47,7 @@ namespace Assets.Code.Scenes
             entityFactoryView.LateInit();
             entityLogicView.LateInit();
 
-            EventBus.Raise<SpawnRequestAcceptedEvent<Player>>(GameClient.MyID, 7u, new Coordinate(0, 0, 0));
+            EventBus.Raise<LocalSpawnRequestAcceptedEvent<Player>>(GameClient.MyID, new Coordinate(0, 0, 0));
         }
 
         public override void Tick(float deltaTime)

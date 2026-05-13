@@ -1,9 +1,9 @@
-﻿using Codice.Client.BaseCommands;
-using System;
-
-namespace MultiplayerArchitecture
+﻿namespace MultiplayerArchitecture
 {
     public sealed class ItemAttribute : System.Attribute
     {
+        public ItemAttribute()
+        {
+        }
     }
 }

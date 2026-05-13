@@ -1,9 +1,8 @@
-﻿using Assets.MultiplayerArchitecture.Code.Entities;
-using ImageCampus.ToolBox.Events;
+﻿using ImageCampus.ToolBox.Events;
 
 namespace MultiplayerArchitecture
 {
-    public struct SpawnRequestAcceptedEvent<EntityType> : IEvent
+    public struct NetworkSpawnRequestAcceptedEvent<EntityType> : IEvent
     {
         public uint ownerNetworkID;
         public uint objectNetworkID;
@@ -24,7 +23,25 @@ namespace MultiplayerArchitecture
         }
     }
 
-    public struct SpawnRequestAcceptedEvent : IEvent
+    public struct LocalSpawnRequestAcceptedEvent<EntityType> : IEvent
+    {
+        public uint ownerNetworkID;
+        public Coordinate coordinateToSpawn;
+
+        public void Assign(params object[] parameters)
+        {
+            ownerNetworkID = (uint)parameters[0];
+            coordinateToSpawn = (Coordinate)parameters[1];
+        }
+
+        public void Reset()
+        {
+            ownerNetworkID = default(uint);
+            coordinateToSpawn = default(Coordinate);
+        }
+    }
+
+    public struct NetworkSpawnRequestAcceptedEvent : IEvent
     {
         public uint ownerNetworkID;
         public uint objectNetworkID;

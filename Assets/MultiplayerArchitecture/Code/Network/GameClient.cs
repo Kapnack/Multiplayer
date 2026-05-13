@@ -22,6 +22,11 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
         public uint MyID { private set; get; }
 
+        public GameClient()
+        {
+            MyID = 1;
+        }
+
         public void Init()
         {
             connection = new ClientConnection(this);
@@ -31,7 +36,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
         public void Tick(float deltaTime)
         {
-           // connection.Tick(deltaTime);
+            // connection.Tick(deltaTime);
         }
 
         public void LateInit()
@@ -46,7 +51,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
         public void OnClienJoined(uint clientID)
         {
-            EventBus.Raise<SpawnRequestAcceptedEvent<Player>>(clientID, 1);
+            EventBus.Raise<NetworkSpawnRequestAcceptedEvent<Player>>(clientID, 1);
         }
 
         public void OnClientLeft(uint clientID)
@@ -58,7 +63,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         {
             MyID = myID;
 
-            EventBus.Raise<SpawnRequestAcceptedEvent>(MyID, 1);
+            EventBus.Raise<NetworkSpawnRequestAcceptedEvent>(MyID, 1);
         }
 
         public void OnPayloadRecieve(byte[] payload, uint clientID)

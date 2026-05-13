@@ -78,7 +78,7 @@ namespace Assets.Code.Entities
                 const uint networkOwnerID = 0u;
                 Coordinate coord = BaseSceneView.WorldToCoordinate(view.transform.position);
 
-                Type openEventType = typeof(SpawnRequestAcceptedEvent<>);
+                Type openEventType = typeof(NetworkSpawnRequestAcceptedEvent<>);
                 Type closedEventType = openEventType.MakeGenericType(entityType);
 
                 MethodInfo raiseMethod = typeof(EventBus).GetMethod("Raise")

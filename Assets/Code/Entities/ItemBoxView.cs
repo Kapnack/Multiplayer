@@ -13,9 +13,9 @@ internal class ItemBoxView : EntityView
     {
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnTriggerEnter(Collider collider)
     {
-        if (collision.collider.TryGetComponent<EntityView>(out EntityView entityView))
+        if (!collider.TryGetComponent<EntityView>(out EntityView entityView))
             return;
 
         EventBus.Raise<IteamBoxCollectedEvent>(OwnerNetworkID, ArchitectureID, entityView.OwnerNetworkID, entityView.ArchitectureID);

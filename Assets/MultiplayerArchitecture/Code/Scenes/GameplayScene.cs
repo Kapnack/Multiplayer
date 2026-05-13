@@ -15,8 +15,8 @@ namespace MultiplayerArchitecture.Code.Scenes
         public override void Init()
         {
             ServiceProvider.Instance.AddService<NetworkRegistry>(new NetworkRegistry());
-            ServiceProvider.Instance.AddService<NetworkFactory>(new NetworkFactory());
             ServiceProvider.Instance.AddService<GameClient>(new GameClient());
+            ServiceProvider.Instance.AddService<NetworkFactory>(new NetworkFactory());
 
             entityLogic = new EntityLogic(); 
 

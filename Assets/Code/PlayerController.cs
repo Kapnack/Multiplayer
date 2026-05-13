@@ -33,6 +33,9 @@ public class PlayerController : EntityView
         Turn(deltaTime);
         LimitSpeed();
         SendMovementEvent(deltaTime);
+
+        if (Input.GetKeyDown(KeyCode.E))
+            EventBus.Raise<SpawnItemRequestEvent>();
     }
 
     private void Move()

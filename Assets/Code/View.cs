@@ -1,4 +1,5 @@
 ﻿using Assets.Code.Scenes;
+using Assets.MultiplayerArchitecture.Code.Entities.ItemBox;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using MultiplayerArchitecture;
@@ -43,6 +44,7 @@ namespace Assets.Code
             uint currentMapIterator = 0;
 
             ViewArchitectureMap.Init();
+            ItemTypes.Init();
 
             foreach (object mapEnum in Enum.GetValues(typeof(Maps)))
                 mapsByEnum.Add((Maps)mapEnum, currentMapIterator == maps.Length ? maps[currentMapIterator - 1] : maps[currentMapIterator++]);
