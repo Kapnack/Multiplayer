@@ -6,6 +6,7 @@ using ImageCampus.ToolBox.Services;
 using KapNet;
 using MultiplayerArchitecture;
 using MultiplayerArchitecture.Entities;
+using Org.BouncyCastle.Asn1.Cms;
 using System;
 
 namespace Assets.MultiplayerArchitecture.Code.Network
@@ -14,29 +15,48 @@ namespace Assets.MultiplayerArchitecture.Code.Network
     {
         EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
+        NetworkRegistry NetworkRegistry => ServiceProvider.Instance.GetService<NetworkRegistry>();
+
         public ClientConnection connection { get; private set; }
+
+        public uint MyID => connection.NetworkID;
 
         public double Ping => connection.Ping;
 
         public bool IsPersistance => false;
 
-        public uint MyID { private set; get; }
-
         public GameClient()
         {
-            MyID = 1;
         }
 
         public void Init()
         {
             connection = new ClientConnection(this);
 
+            EventBus.Subscribe<LocalObjectMoveEvent>(OnLocalEntityMove);
+            EventBus.Subscribe<EntityViewCreatedEvent<Entity>>(OnLocalEntityCreated);
+            
             connection.Init();
+        }
+
+        private void OnLocalEntityMove(in LocalObjectMoveEvent localObjectMoveEvent)
+        {
+            connection.Send(PacketType.Position, PacketMetaData.None, connection.NetworkID, localObjectMoveEvent.objectNetworkID,
+                localObjectMoveEvent.coordinate.x, localObjectMoveEvent.coordinate.y, localObjectMoveEvent.coordinate.z);
+        }
+
+        private void OnLocalEntityCreated(in EntityViewCreatedEvent<Entity> entityCreatedEvent)
+        {
+            string entityCreated = NetworkRegistry.Get(entityCreatedEvent.ownerNetworkID, entityCreatedEvent.objectNetworkID).GetType().Name;
+
+            connection.Send(PacketType.Spawn, PacketMetaData.None, connection.NetworkID, entityCreatedEvent.objectNetworkID,
+                entityCreatedEvent.coordinate.x, entityCreatedEvent.coordinate.y, entityCreatedEvent.coordinate.z,
+               entityCreated.Length, entityCreated);
         }
 
         public void Tick(float deltaTime)
         {
-            // connection.Tick(deltaTime);
+            connection.Tick(deltaTime);
         }
 
         public void LateInit()
@@ -46,12 +66,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
         public void Send(byte[] data, PacketMetaData metadata = PacketMetaData.None)
         {
-            connection.Send(PacketType.Data, data, metadata);
-        }
-
-        public void OnClienJoined(uint clientID)
-        {
-            EventBus.Raise<NetworkSpawnRequestAcceptedEvent<Player>>(clientID, 1);
+            connection.Send(PacketType.Data, metadata, data);
         }
 
         public void OnClientLeft(uint clientID)
@@ -61,20 +76,27 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
         public void OnHandShake(uint myID)
         {
-            MyID = myID;
+            connection.NetworkID = myID;
 
-            EventBus.Raise<NetworkSpawnRequestAcceptedEvent>(MyID, 1);
+            EventBus.Raise<LocalSpawnRequestAcceptedEvent<Player>>(connection.NetworkID);
         }
 
-        public void OnPayloadRecieve(byte[] payload, uint clientID)
+        public void OnSpawn(uint clientID, uint entityID, Coordinate coordinate, string entityToSpawn)
         {
-            float x = BitConverter.ToSingle(payload, 0);
-            float y = BitConverter.ToSingle(payload, sizeof(float));
-            float z = BitConverter.ToSingle(payload, sizeof(float) * 2);
+            if (!connection.NetworkID.Equals(clientID))
+                EventBus.Raise<NetworkSpawnRequestAcceptedEvent>(clientID, entityID, coordinate, entityToSpawn);
+        }
 
-            Coordinate newCoordinate = new Coordinate(x, y, z);
+        public void OnDestroyEntity(uint clientID, uint entityID)
+        {
+            if (!connection.NetworkID.Equals(clientID))
+                EventBus.Raise<EntityDestroyedEvent>(clientID, entityID);
+        }
 
-            EventBus.Raise<NetworkObjectMoveEvent>(clientID, newCoordinate);
+        public void OnPositionRecieve(uint clientID, uint entityID, Coordinate coordinate)
+        {
+            if (!connection.NetworkID.Equals(clientID))
+                EventBus.Raise<NetworkObjectMoveEvent>(clientID, entityID, coordinate);
         }
 
         public void OnServerShutDown()
@@ -85,6 +107,8 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         public void Dispose()
         {
             connection.Dispose();
+            EventBus.Unsubscribe<LocalObjectMoveEvent>(OnLocalEntityMove);
+            EventBus.Unsubscribe<EntityViewCreatedEvent<Entity>>(OnLocalEntityCreated);
         }
     }
 }

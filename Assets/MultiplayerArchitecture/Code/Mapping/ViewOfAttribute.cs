@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ZooArchitect.View.Mapping
+namespace MutliplayerView.Game.Mapping
 {
     public sealed class ViewOfAttribute : Attribute
     {

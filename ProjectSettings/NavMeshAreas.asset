@@ -91,10 +91,10 @@ NavMeshProjectSettings:
       m_Flags: 0
   - serializedVersion: 3
     agentTypeID: -1372625422
-    agentRadius: 1
-    agentHeight: 1
-    agentSlope: 0
-    agentClimb: 0.4
+    agentRadius: 0.3
+    agentHeight: 0.4
+    agentSlope: 8
+    agentClimb: 0.1
     ledgeDropHeight: 0
     maxJumpAcrossDistance: 0
     minRegionArea: 2
@@ -109,4 +109,4 @@ NavMeshProjectSettings:
       m_Flags: 0
   m_SettingNames:
   - Humanoid
-  - New Agent
+  - Bullet

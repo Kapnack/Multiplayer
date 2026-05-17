@@ -97,7 +97,7 @@ namespace Assets.Code.Entities
             } while (ItemTypes.Count > 1 && itemToUse.Equals(previousPowerUp));
         }
 
-        private void OnItemSpawnedRequested(in SpawnItemRequestEvent _)
+        private void OnItemSpawnedRequested(in SpawnItemRequestEvent spawnItemRequestEvent)
         {
             if (itemToUse == null)
                 return;
@@ -108,11 +108,14 @@ namespace Assets.Code.Entities
             MethodInfo raiseMethod = typeof(EventBus).GetMethod("Raise")
                 .MakeGenericMethod(closedEventType);
 
-            object[] parameters = new object[] { GameClient.MyID, new Coordinate(0, 0, 0) };
+            object[] parameters = new object[] { GameClient.MyID, spawnItemRequestEvent.coordinate };
 
             raiseMethod.Invoke(EventBus, new object[] { parameters });
 
             Debug.Log(itemToUse.Name + ": Spawn Accepted.");
+
+            previousPowerUp = itemToUse;
+            itemToUse = null;
         }
 
         public void Dispose()

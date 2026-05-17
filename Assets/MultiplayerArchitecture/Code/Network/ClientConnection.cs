@@ -2,6 +2,7 @@ using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Dataflow;
 using KapNet;
 using KapNet.src;
+using MultiplayerArchitecture;
 using System;
 using System.Net;
 
@@ -11,8 +12,6 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     private DateTime lastServerResponce;
 
-    private uint MyID = 0;
-
     public double Ping { get; private set; }
 
     public ClientConnection(IClient client) : base()
@@ -20,19 +19,43 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
         this.client = client;
 
         PacketTypeStrategy.Add(PacketType.ConnectToServer, HandleServerConnection);
-        PacketTypeStrategy.Add(PacketType.Data, HandleData);
-        PacketTypeStrategy.Add(PacketType.ClientJoined, HandleClientJoined);
+        PacketTypeStrategy.Add(PacketType.Spawn, HandleEntitySpawn);
+        PacketTypeStrategy.Add(PacketType.Destroy, HandleDestroy);
+        PacketTypeStrategy.Add(PacketType.Position, HandlePosition);
+    }
+
+    private void HandlePosition(NetworkPacket networkPacket)
+    {
+        uint clientID = packetReader.ReadUInt();
+        uint entityID = packetReader.ReadUInt();
+        Coordinate coordinate = new Coordinate(packetReader.ReadFloat(), packetReader.ReadFloat(), packetReader.ReadFloat());
+
+        client.OnPositionRecieve(clientID, entityID, coordinate);
+    }
+
+    private void HandleDestroy(NetworkPacket networkPacket)
+    {
+        uint clientID = packetReader.ReadUInt();
+        uint entityID = packetReader.ReadUInt();
+
+        client.OnDestroyEntity(clientID, entityID);
+    }
+
+    private void HandleEntitySpawn(NetworkPacket networkPacket)
+    {
+        uint clientID = packetReader.ReadUInt();
+        uint entityID = packetReader.ReadUInt();
+        Coordinate coordinate = new Coordinate(packetReader.ReadFloat(), packetReader.ReadFloat(), packetReader.ReadFloat());
+        string entityToSpawn = packetReader.ReadString();
+
+        client.OnSpawn(clientID, entityID, coordinate, entityToSpawn);
     }
 
     private void HandleServerConnection(NetworkPacket networkPacket)
     {
-        byte[] payload = networkPacket.payload;
+        byte[] ipBytes = packetReader.ReadBytes();
 
-        byte[] ipBytes = new byte[4];
-        Buffer.BlockCopy(payload, 0, ipBytes, 0, 4);
-
-        byte[] portBytes = new byte[4];
-        Buffer.BlockCopy(payload, 4, portBytes, 0, 4);
+        byte[] portBytes = packetReader.ReadBytes();
 
         IPAddress ipAddress = new IPAddress(ipBytes);
         int port = BitConverter.ToInt32(portBytes, 0);
@@ -43,20 +66,16 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
         Connect(ipAddress, port);
 
-        SendHandshake(new byte[0]);
+        Send(PacketType.Handshake);
     }
 
     protected override void HandleHandShake(NetworkPacket networkPacket)
     {
-        MyID = BitConverter.ToUInt32(networkPacket.payload, sizeof(uint));
-        int seedBytes = BitConverter.ToInt32(networkPacket.payload, sizeof(uint) * 2);
-
-        byte[] encryptionSeed = new byte[seedBytes];
-
-        Buffer.BlockCopy(encryptionSeed, 0, networkPacket.payload, sizeof(uint) * 2 + sizeof(int), seedBytes);
+        NetworkID = packetReader.ReadUInt();
+        byte[] encryptionSeed = packetReader.ReadBytes();
 
         packetEncryptor = new PacketEncryptor(encryptionSeed);
-        client.OnHandShake(MyID);
+        client.OnHandShake(NetworkID);
     }
 
     private void CheckServerIsResponding()
@@ -65,49 +84,14 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
             client.OnServerShutDown();
     }
 
-    public void SendHandshake(byte[] payload)
-    {
-        byte[] newPayload = new byte[sizeof(uint) + sizeof(ConnectionRole) + payload.Length];
-
-        BitConverter.GetBytes(MyID).CopyTo(newPayload, 0);
-        newPayload[sizeof(uint)] = (byte)ConnectionRole.Client;
-        Buffer.BlockCopy(payload, 0, newPayload, sizeof(uint) + sizeof(ConnectionRole), payload.Length);
-
-        Send(PacketType.Handshake, newPayload, PacketMetaData.Reliable);
-    }
-
-    public void SendPacket(PacketType type, byte[] payload, PacketMetaData metaData)
-    {
-        Send(type, payload, metaData);
-    }
-
     void SendPing()
     {
-        Send(PacketType.Ping, BitConverter.GetBytes(DateTime.UtcNow.Ticks));
+        Send(PacketType.Ping, PacketMetaData.None, BitConverter.GetBytes(DateTime.UtcNow.Ticks));
     }
 
     protected override void HandleClientLeft(NetworkPacket packet)
     {
         client.OnClientLeft(BitConverter.ToUInt32(packet.payload));
-    }
-
-    private void HandleClientJoined(NetworkPacket packet)
-    {
-        client.OnClienJoined(BitConverter.ToUInt32(packet.payload, 0));
-    }
-
-    void HandleData(NetworkPacket networkPacket)
-    {
-        uint clientID = BitConverter.ToUInt32(networkPacket.payload, 0);
-
-        if (clientID == MyID)
-            return;
-
-        byte[] newPayload = new byte[networkPacket.payload.Length - sizeof(uint)];
-
-        Buffer.BlockCopy(networkPacket.payload, sizeof(uint), newPayload, 0, newPayload.Length);
-
-        client.OnPayloadRecieve(newPayload, clientID);
     }
 
     public void Init()
@@ -123,10 +107,10 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
     {
         Tick();
 
-        CheckServerIsResponding();
-
-        if (MyID.Equals(0))
+        if (NetworkID.Equals(0))
             return;
+
+        CheckServerIsResponding();
 
         SendPing();
     }
@@ -149,5 +133,9 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
         Ping = (utcNow - sendTime).TotalMilliseconds;
 
         lastServerResponce = utcNow;
+    }
+
+    protected override void HandleUnhandledPacket(IPEndPoint packet, byte[] data)
+    {
     }
 }

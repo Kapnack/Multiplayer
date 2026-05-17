@@ -76,9 +76,10 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
         public IEnumerable<EntityType> FilterEntities<EntityType>(uint ownerNetworkID) where EntityType : Entity
         {
-            if (entityIdsPerType[ownerNetworkID].ContainsKey(typeof(EntityType)))
-                foreach (uint ID in entityIdsPerType[ownerNetworkID][typeof(EntityType)])
-                    yield return entities[ID] as EntityType;
+            if (entityIdsPerType.ContainsKey(ownerNetworkID))
+                if (entityIdsPerType[ownerNetworkID].ContainsKey(typeof(EntityType)))
+                    foreach (uint ID in entityIdsPerType[ownerNetworkID][typeof(EntityType)])
+                        yield return entities[ID] as EntityType;
         }
 
         internal Dictionary<uint, Entity> this[uint ownerID] => entities[ownerID];

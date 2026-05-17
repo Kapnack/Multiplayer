@@ -10,6 +10,7 @@ namespace KapNet
 {
     public class ClientData
     {
+        public string userName;
         public uint id;
         public bool isConnected;
         public DateTime lastResponce;
@@ -42,8 +43,6 @@ namespace KapNet
         {
             InitEncryption();
 
-            PacketTypeStrategy.Add(PacketType.Data, HandleData);
-
             matchMakerData = new MatchMakerData();
 
             Connect(portToHost);
@@ -51,7 +50,7 @@ namespace KapNet
             IPAddress ipAddress = IPAddress.Parse(matchMakingIP);
             matchMakerData.IPEndPoint = new IPEndPoint(ipAddress, portToConnect);
 
-            Send(matchMakerData.IPEndPoint, PacketType.Handshake, BitConverter.GetBytes((byte)ConnectionRole.Server), PacketMetaData.Reliable);
+            Send(matchMakerData.IPEndPoint, PacketType.Handshake, PacketMetaData.Reliable, ConnectionRole.Server);
 
             isConnectedToMatchMaking = true;
         }
@@ -59,8 +58,6 @@ namespace KapNet
         internal Server() : base()
         {
             InitEncryption();
-
-            PacketTypeStrategy.Add(PacketType.Data, HandleData);
 
             Connect(7777);
         }
@@ -100,9 +97,14 @@ namespace KapNet
                 isConnectedToMatchMaking = false;
         }
 
+        protected override void HandleUnhandledPacket(IPEndPoint sender, byte[] data)
+        {
+            BroadcastRaw(sender, data);
+        }
+
         private void SendPingToMatchMaker()
         {
-            Send(matchMakerData.IPEndPoint, PacketType.Ping, BitConverter.GetBytes(DateTime.UtcNow.Ticks));
+            Send(matchMakerData.IPEndPoint, PacketType.Ping, PacketMetaData.None, DateTime.UtcNow.Ticks);
         }
 
         void Unload()
@@ -143,19 +145,14 @@ namespace KapNet
                 clients[ip].ping = ping;
             }
 
-            Send(ip, PacketType.Ping, BitConverter.GetBytes(DateTime.UtcNow.Ticks));
-        }
-
-        private void HandleData(NetworkPacket packet)
-        {
-            BroadcastRaw(packet.rawPacket, packet.ipEndPoint);
+            Send(ip, PacketType.Ping, PacketMetaData.None, DateTime.UtcNow.Ticks);
         }
 
         protected override void HandleHandShake(NetworkPacket networkPacket)
         {
             if (clients.ContainsKey(networkPacket.ipEndPoint))
             {
-                Send(networkPacket.ipEndPoint, PacketType.Handshake, BitConverter.GetBytes(clients[networkPacket.ipEndPoint].id), PacketMetaData.Reliable);
+                Send(networkPacket.ipEndPoint, PacketType.Handshake, PacketMetaData.Reliable, clients[networkPacket.ipEndPoint].id);
                 clients[networkPacket.ipEndPoint].isConnected = true;
                 clients[networkPacket.ipEndPoint].lastResponce = DateTime.UtcNow;
                 return;
@@ -174,18 +171,11 @@ namespace KapNet
 
             ServerConsole.Log($"Client connected: {networkPacket.ipEndPoint} ID: {newID}");
 
-            byte[] payload = new byte[sizeof(uint) * 2 + sizeof(int) + encryptorSeed.Length];
-
-            BitConverter.GetBytes(0).CopyTo(payload, 0);
-            BitConverter.GetBytes(newID).CopyTo(payload, sizeof(uint));
-            BitConverter.GetBytes(encryptorSeed.Length).CopyTo(payload, sizeof(uint) * 2);
-            encryptorSeed.CopyTo(payload, sizeof(uint) * 2 + sizeof(int));
-
-            Send(networkPacket.ipEndPoint, PacketType.Handshake, payload, PacketMetaData.Reliable);
+            Send(networkPacket.ipEndPoint, PacketType.Handshake, PacketMetaData.Reliable, NetworkID, encryptorSeed);
 
             foreach (KeyValuePair<IPEndPoint, ClientData> it in clients)
                 if (!it.Key.Equals(networkPacket.ipEndPoint))
-                    Send(networkPacket.ipEndPoint, PacketType.ClientJoined, BitConverter.GetBytes(it.Value.id), PacketMetaData.Reliable);
+                    Send(networkPacket.ipEndPoint, PacketType.ClientJoined, PacketMetaData.Reliable, it.Value.id);
 
             Broadcast(networkPacket.ipEndPoint, PacketType.ClientJoined, BitConverter.GetBytes(newID), PacketMetaData.Reliable);
         }
@@ -199,7 +189,7 @@ namespace KapNet
         {
             foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
             {
-                Send(client.Key, type, payload, metaData);
+                Send(client.Key, type, metaData, payload);
             }
         }
 
@@ -210,11 +200,11 @@ namespace KapNet
                 if (!client.Value.isConnected || client.Key.Equals(exception))
                     continue;
 
-                Send(client.Key, type, payload, metaData);
+                Send(client.Key, type, metaData, payload);
             }
         }
 
-        void BroadcastRaw(byte[] data, IPEndPoint exception)
+        void BroadcastRaw(IPEndPoint exception, byte[] data)
         {
             foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
             {

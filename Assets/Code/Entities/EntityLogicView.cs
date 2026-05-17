@@ -7,11 +7,12 @@ namespace Assets.Code.Entities
     {
         CarLogic carLogic;
         ItemBoxLogic itemBoxLogic;
-
+        ChasingBulletLogic chasingBulletLogic;
         public EntityLogicView()
         {
             carLogic = new CarLogic();
             itemBoxLogic = new ItemBoxLogic();
+            chasingBulletLogic = new ChasingBulletLogic();
         }
 
         public void Init()
@@ -30,6 +31,7 @@ namespace Assets.Code.Entities
         {
             carLogic.Tick(deltaTime);
             itemBoxLogic.Tick(deltaTime);
+            chasingBulletLogic.Tick(deltaTime);
         }
 
         public void Dispose()

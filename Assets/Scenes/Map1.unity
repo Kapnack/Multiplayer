@@ -149,6 +149,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Assets.Code.View
   usersPrefabs: {fileID: 3521440486679471687, guid: 7415d972fc19cb54fa3069960ac4bb46, type: 3}
+  bulletPrefab: {fileID: 236991744741283759, guid: 2f1c19e27a794234cadb2d5fe82dd3c1, type: 3}
+  bananaPrefab: {fileID: 1638879536705654464, guid: ad8c1554d6ce02d458506504c3719f38, type: 3}
+  oilPrefab: {fileID: 8162119556296253135, guid: ad1ddbdf74221de4b963b56f881cfb0f, type: 3}
   maps:
   - {fileID: 566264369926295140, guid: 4f1c9b4cd9387964ebb799db4f285d1d, type: 3}
   cam: {fileID: 2121750344}
@@ -1415,7 +1418,6 @@ GameObject:
   - component: {fileID: 1365236285}
   - component: {fileID: 1365236284}
   - component: {fileID: 1365236283}
-  - component: {fileID: 1365236282}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1423,18 +1425,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
---- !u!114 &1365236282
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1365236281}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 91ae84055f98da14d8b4494308922926, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
 --- !u!114 &1365236283
 MonoBehaviour:
   m_ObjectHideFlags: 0

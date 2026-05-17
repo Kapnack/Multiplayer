@@ -2,7 +2,8 @@ using Assets.Code.Entities;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using UnityEngine;
-using ZooArchitect.View.Mapping;
+using MutliplayerView.Game.Mapping;
+using MultiplayerView;
 
 [ViewOf(typeof(ItemBox))]
 internal class ItemBoxView : EntityView

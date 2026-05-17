@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace ZooArchitect.View.Mapping
+namespace MutliplayerView.Game.Mapping
 {
     public static class ViewArchitectureMap
     {

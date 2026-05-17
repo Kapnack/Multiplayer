@@ -1,11 +1,14 @@
-﻿namespace Assets.MultiplayerArchitecture.Code.Network
+﻿using MultiplayerArchitecture;
+
+namespace Assets.MultiplayerArchitecture.Code.Network
 {
     public interface IClient
     {
         void OnHandShake(uint myID);
-        void OnClienJoined(uint clientID);
-        void OnPayloadRecieve(byte[] payload, uint clientID);
         void OnClientLeft(uint clientID);
+        void OnSpawn(uint clientID, uint entityID, Coordinate coordinate, string entityToSpawn);
+        void OnDestroyEntity(uint clientID, uint entityID);
+        void OnPositionRecieve(uint clientID, uint entityID, Coordinate coordinate);
         void OnServerShutDown();
     }
 }

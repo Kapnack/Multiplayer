@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4687779735418869032}
   - component: {fileID: 4853526120755023787}
+  - component: {fileID: 1732698490683964405}
   m_Layer: 0
   m_Name: Map
   m_TagString: Untagged
@@ -64,10 +65,46 @@ MonoBehaviour:
   m_OverrideTileSize: 0
   m_TileSize: 256
   m_OverrideVoxelSize: 0
-  m_VoxelSize: 0.33333334
+  m_VoxelSize: 0.1
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 0}
+  m_NavMeshData: {fileID: 23800000, guid: 538ac9017c8fa224b975587e1036ef21, type: 2}
   m_BuildHeightMesh: 0
+--- !u!114 &1732698490683964405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 566264369926295140}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acd059f898daa71458b00ef19c9aab35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  spawnPoints:
+  - {x: 0, y: 0, z: 0}
+  raceMarkers:
+  - {x: 0, y: 1, z: 17.1}
+  - {x: 22.76, y: 1, z: 17.1}
+  - {x: 33.3, y: 1, z: -2.6}
+  - {x: 33.3, y: 1, z: -24.76}
+  - {x: 21.2, y: 1, z: -30.2}
+  - {x: 20.1, y: 1, z: -54.3}
+  - {x: -28.1, y: 1, z: -54.3}
+  - {x: -46.7, y: 1, z: -18.8}
+  - {x: -80.5, y: 1, z: -12.4}
+  - {x: -103.5, y: 1, z: -9.27}
+  - {x: -116.1, y: 1, z: 8.2}
+  - {x: -114.3, y: 1, z: 42.4}
+  - {x: -102.5, y: 1, z: 51.3}
+  - {x: -98.6, y: 1, z: 61.6}
+  - {x: -83.9, y: 1, z: 75.8}
+  - {x: -68.2, y: 1, z: 75.4}
+  - {x: -56.5, y: 1, z: 63.6}
+  - {x: -58.3, y: 1, z: 43.8}
+  - {x: -82.4, y: 1, z: 30}
+  - {x: -80.6, y: 1, z: 17.9}
+  collisionSize: 8
 --- !u!1 &1312262870529787846
 GameObject:
   m_ObjectHideFlags: 0
@@ -168,9 +205,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
   m_SerializedVersion: 0
   m_AgentTypeID: -1372625422
-  m_CollectObjects: 0
-  m_Size: {x: 10, y: 10, z: 10}
-  m_Center: {x: 0, y: 2, z: 0}
+  m_CollectObjects: 1
+  m_Size: {x: 167.78749, y: 11.616899, z: 158.19067}
+  m_Center: {x: 59.866554, y: 2.8084464, z: -35.77745}
   m_LayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -182,9 +219,9 @@ MonoBehaviour:
   m_OverrideTileSize: 0
   m_TileSize: 256
   m_OverrideVoxelSize: 0
-  m_VoxelSize: 0.33333334
+  m_VoxelSize: 0.1
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: ae632053ed2c96641940857efc186f32, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: e436b89c67820624ba542699574f021f, type: 2}
   m_BuildHeightMesh: 0
 --- !u!1 &4483686841627937868
 GameObject:

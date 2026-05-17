@@ -2,6 +2,7 @@
 using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
+using KapNet;
 using MultiplayerArchitecture;
 using System;
 using UnityEngine.UI;
@@ -54,16 +55,13 @@ namespace Assets.Code
 
         private bool ShouldConnect()
         {
-            return !(nameText.Equals("") || ipText.Equals(""));
+            return !(nameText.text.Equals("") || ipText.text.Equals(""));
         }
 
         private void SendHandshake(string userName, int mapID)
         {
-            byte[] payload = new byte[sizeof(int) * 2 + userName.Length];
-
-            BitConverter.GetBytes(mapID).CopyTo(payload, 0);
-
-            //GameClient.connection.SendHandshake(new byte[0]);
+            GameClient.connection.Connect(ipText.text, 7777);
+            GameClient.connection.Send(PacketType.Handshake, PacketMetaData.Reliable, mapID, userName.Length, userName);
         }
 
         private void OnConnectToMap1()

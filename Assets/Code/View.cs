@@ -10,7 +10,7 @@ using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
-using ZooArchitect.View.Mapping;
+using MutliplayerView.Game.Mapping;
 
 namespace Assets.Code
 {
@@ -22,6 +22,9 @@ namespace Assets.Code
         private MapToLoad MapToLoad => ServiceProvider.Instance.GetService<MapToLoad>();
 
         [SerializeField] private GameObject usersPrefabs;
+        [SerializeField] private GameObject bulletPrefab;
+        [SerializeField] private GameObject bananaPrefab;
+        [SerializeField] private GameObject oilPrefab;
         [SerializeField] private GameObject[] maps;
         [SerializeField] private Camera cam;
         [SerializeField] private TMP_Text pingText;
@@ -98,7 +101,7 @@ namespace Assets.Code
 
             ServiceProvider.Instance.AddService<BaseSceneView>(changeSceneEvent.scene == Scene.MainMenu ?
                 new MainMenuViewScene(nameText, ip, levelText, connect, connect2) :
-                new GameplayViewScene(mapsByEnum[MapToLoad.mapToLoad], pingText, usersPrefabs, cam));
+                new GameplayViewScene(mapsByEnum[MapToLoad.mapToLoad], bulletPrefab, bananaPrefab, oilPrefab, pingText, usersPrefabs, cam));
 
             CurrentScene.Init();
             CurrentScene.LateInit();

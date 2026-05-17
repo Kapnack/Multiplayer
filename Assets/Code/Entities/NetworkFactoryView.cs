@@ -10,7 +10,9 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-using ZooArchitect.View.Mapping;
+using UnityEngine.AI;
+using MutliplayerView.Game.Mapping;
+using MultiplayerView;
 
 namespace Assets.Code.Entities
 {
@@ -28,28 +30,37 @@ namespace Assets.Code.Entities
         private Dictionary<Type, GameObject> prefabsOfTypes;
 
         private GameObject usersPrefab;
+        private GameObject bulletPrefab;
+        private GameObject bananaPrefab;
+        private GameObject oilPrefab;
         private Camera camera;
 
         private MethodInfo registerEntityMethodView;
-        private MethodInfo registerEntityMethod;
         private MethodInfo setEntityIdMethod;
 
-        public NetworkFactoryView(GameObject usersPrefab, Camera camera)
+        public NetworkFactoryView(GameObject usersPrefab, GameObject bulletPrefab, GameObject bananaPrefab, GameObject oilPrefab, Camera camera)
         {
             this.usersPrefab = usersPrefab;
+            this.oilPrefab = oilPrefab;
+            this.bulletPrefab = bulletPrefab;
+            this.bananaPrefab = bananaPrefab;
             this.camera = camera;
 
             componentAssigner = new Dictionary<Type, ComponentAssigner>()
             {
-                {typeof(Player), PlayerComponents}
+                {typeof(Player), PlayerComponents},
+                {typeof(ChasingBullet), ChasingBulletComponents},
+                {typeof(Banana), BananaComponenets},
+                {typeof(Oil), OilComponenets}
             };
 
             prefabsOfTypes = new Dictionary<Type, GameObject>()
             {
-                { typeof(Player), this.usersPrefab}
+                { typeof(Player), this.usersPrefab},
+                { typeof(ChasingBullet), this.bulletPrefab},
+                { typeof(Banana), this.bananaPrefab},
+                { typeof(Oil), this.oilPrefab}
             };
-
-            registerEntityMethod = EntityRegistry.GetType().GetMethod(EntityRegistry.RegisterMethodName, BindingFlags.NonPublic | BindingFlags.Instance);
 
             registerEntityMethodView = EntityRegistryView.GetType().GetMethod(EntityRegistryView.RegisterMethodName,
                 BindingFlags.NonPublic | BindingFlags.Instance);
@@ -100,7 +111,7 @@ namespace Assets.Code.Entities
         private void OnEntityCreated(in EntityCreatedEvent<Entity> entityCreated)
         {
             Type entityType = EntityRegistry.Get<Entity>(entityCreated.ownerNetworkID, entityCreated.objectNetworkID).GetType();
-            string entityName = entityType.Name + "Owner: " + entityCreated.ownerNetworkID + "ObjectID: " + entityCreated.objectNetworkID;
+            string entityName = entityType.Name + ". Owner: " + entityCreated.ownerNetworkID + ". ObjectID: " + entityCreated.objectNetworkID + ".";
 
             ViewComponent viewComponent = BaseSceneView.AddSceneComponent(ViewArchitectureMap.ViewOf(entityType), entityName, null, prefabsOfTypes.ContainsKey(entityType) ? prefabsOfTypes[entityType] : null);
 
@@ -115,6 +126,15 @@ namespace Assets.Code.Entities
 
             viewComponent.Init();
             viewComponent.LateInit();
+
+            Type openEventType = typeof(EntityViewCreatedEvent<>);
+            Type closedEventType = openEventType.MakeGenericType(entityType);
+
+            MethodInfo raiseMethod = typeof(EventBus).GetMethod("Raise")
+                .MakeGenericMethod(closedEventType);
+
+            object[] eventParams = new object[] { entityCreated.ownerNetworkID, entityCreated.objectNetworkID };
+            raiseMethod.Invoke(EventBus, new object[] { eventParams });
         }
 
         private void PlayerComponents(ViewComponent viewComponent)
@@ -139,6 +159,51 @@ namespace Assets.Code.Entities
             {
                 renderer.material.color = Color.red;
             }
+        }
+
+        private void ChasingBulletComponents(ViewComponent viewComponent)
+        {
+            GameObject gameObject = viewComponent.gameObject;
+
+            BoxCollider boxCollider = gameObject.GetComponentInChildren<BoxCollider>();
+            boxCollider.isTrigger = true;
+
+            Renderer renderer = gameObject.GetComponentInChildren<Renderer>();
+
+            renderer.material.color = GameClient.MyID == (viewComponent as EntityView).OwnerNetworkID
+                ? Color.green : Color.red;
+
+            Vector3 spawnPos = gameObject.transform.position;
+
+            if (NavMesh.SamplePosition(spawnPos, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
+            {
+                gameObject.transform.position = hit.position + Vector3.up * (gameObject.transform.localScale.y * 0.5f);
+                NavMeshAgent navMesh = gameObject.AddComponent<NavMeshAgent>();
+                navMesh.stoppingDistance = 0.1f;
+                navMesh.speed = 25.0f;
+                navMesh.autoBraking = false;
+                navMesh.enabled = true;
+            }
+            else
+            {
+                Debug.LogError("Could not find a NavMesh near the spawn position! Bullet cannot be created.");
+            }
+        }
+
+        private void BananaComponenets(ViewComponent viewComponent)
+        {
+            GameObject gameObject = viewComponent.gameObject;
+
+            BoxCollider boxCollider = gameObject.AddComponent<BoxCollider>();
+            boxCollider.isTrigger = true;
+        }
+
+        private void OilComponenets(ViewComponent viewComponent)
+        {
+            GameObject gameObject = viewComponent.gameObject;
+
+            BoxCollider boxCollider = gameObject.AddComponent<BoxCollider>();
+            boxCollider.isTrigger = true;
         }
 
         public void Dispose()

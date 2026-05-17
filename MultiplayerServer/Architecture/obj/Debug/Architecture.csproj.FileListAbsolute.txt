@@ -21,3 +21,4 @@ D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\obj\Debug\Arc
 D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\obj\Debug\Architec.80494994.Up2Date
 D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\obj\Debug\Architecture.dll
 D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\obj\Debug\Architecture.pdb
+D:\UnityProjects\Multiplayer\Client\MultiplayerServer\Architecture\bin\Debug\KapNet.dll

@@ -22,14 +22,14 @@ namespace Assets.Code.Scenes
 
         private string pingFormat;
 
-        public GameplayViewScene(GameObject selectedMap, TMP_Text pingText, GameObject userPrefabs, Camera camera)
+        public GameplayViewScene(GameObject selectedMap, GameObject bulletPrefab, GameObject bananaPrefab, GameObject oilPrefab, TMP_Text pingText, GameObject userPrefabs, Camera camera)
         {
             ServiceProvider.Instance.AddService<NetworkRegistryView>(new NetworkRegistryView());
 
             this.pingText = pingText;
-            Object.Instantiate(selectedMap);
+            ServiceProvider.Instance.AddService<MapView>(Object.Instantiate(selectedMap).GetComponent<MapView>());
 
-            entityFactoryView = new NetworkFactoryView(userPrefabs, camera);
+            entityFactoryView = new NetworkFactoryView(userPrefabs, bulletPrefab, bananaPrefab, oilPrefab, camera);
             entityLogicView = new EntityLogicView();
         }
 
@@ -46,8 +46,6 @@ namespace Assets.Code.Scenes
         {
             entityFactoryView.LateInit();
             entityLogicView.LateInit();
-
-            EventBus.Raise<LocalSpawnRequestAcceptedEvent<Player>>(GameClient.MyID, new Coordinate(0, 0, 0));
         }
 
         public override void Tick(float deltaTime)

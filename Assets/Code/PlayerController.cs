@@ -6,7 +6,8 @@ using ImageCampus.ToolBox.Services;
 using MultiplayerArchitecture;
 using MultiplayerArchitecture.Entities;
 using UnityEngine;
-using ZooArchitect.View.Mapping;
+using MutliplayerView.Game.Mapping;
+using MultiplayerView;
 
 [ViewOf(typeof(Player))]
 public class PlayerController : EntityView
@@ -17,7 +18,6 @@ public class PlayerController : EntityView
     [SerializeField] private float maxSpeed = 20.0f;
     [SerializeField] private float turnSpeed = 150.0f;
     [SerializeField] private float drag = 0f;
-
     private Rigidbody rb;
 
     public override void Init()
@@ -35,7 +35,7 @@ public class PlayerController : EntityView
         SendMovementEvent(deltaTime);
 
         if (Input.GetKeyDown(KeyCode.E))
-            EventBus.Raise<SpawnItemRequestEvent>();
+            EventBus.Raise<SpawnItemRequestEvent>(new Coordinate(transform.position.x, transform.position.y, transform.position.z));
     }
 
     private void Move()

@@ -2,10 +2,10 @@
 
 public struct ChasingBulletCollideEvent : IEvent
 {
-    uint ownerNetworkID;
-    uint objecNetworkID;
-    uint ownerNetworkIDCollision;
-    uint objectNetworkIDCollision;
+    public uint ownerNetworkID;
+    public uint objecNetworkID;
+    public uint ownerNetworkIDCollision;
+    public uint objectNetworkIDCollision;
 
     public void Assign(params object[] parameters)
     {
