@@ -97,7 +97,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
         private void RaseEntityRequestAccepted<EntityType>(NetworkSpawnRequestAcceptedEvent spawnRequestAcceptedEvent) where EntityType : Entity
         {
-            EventBus.Raise<NetworkSpawnRequestAcceptedEvent<EntityType>>(spawnRequestAcceptedEvent.coordinateToSpawn, spawnRequestAcceptedEvent.entityTypeName);
+            EventBus.Raise<NetworkSpawnRequestAcceptedEvent<EntityType>>(spawnRequestAcceptedEvent.ownerNetworkID, spawnRequestAcceptedEvent.objectNetworkID, spawnRequestAcceptedEvent.coordinateToSpawn, spawnRequestAcceptedEvent.entityTypeName);
         }
 
         private void SubscribeToCreation<EntityType>() where EntityType : Entity
