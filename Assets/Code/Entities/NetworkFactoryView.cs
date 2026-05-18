@@ -6,13 +6,14 @@ using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using MultiplayerArchitecture;
 using MultiplayerArchitecture.Entities;
+using MultiplayerView;
+using MutliplayerView.Game.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Security.Cryptography.Xml;
 using UnityEngine;
 using UnityEngine.AI;
-using MutliplayerView.Game.Mapping;
-using MultiplayerView;
 
 namespace Assets.Code.Entities
 {
@@ -155,11 +156,28 @@ namespace Assets.Code.Entities
         {
             GameObject gameObject = viewComponent.gameObject;
 
-            Rigidbody rigidbody = gameObject.AddComponent<Rigidbody>();
-
-            rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
-
             Renderer renderer = gameObject.GetComponentInChildren<Renderer>();
+            BoxCollider boxCollider = gameObject.AddComponent<BoxCollider>();
+            Rigidbody rb = gameObject.AddComponent<Rigidbody>();
+
+            RaycastHit hit;
+            Vector3 origin = gameObject.transform.position + Vector3.up * 10f;
+            float rayDistance = 50f;
+
+            if (Physics.Raycast(origin, Vector3.down, out hit, rayDistance))
+            {
+                float offset = boxCollider.size.y * 0.5f;
+
+                gameObject.transform.position = new Vector3(
+                    gameObject.transform.position.x,
+                    hit.point.y + offset,
+                    gameObject.transform.position.z
+                );
+            }
+
+            rb.constraints =
+                RigidbodyConstraints.FreezeRotationX |
+                RigidbodyConstraints.FreezeRotationZ;
 
             if (GameClient.MyID == (viewComponent as EntityView).OwnerNetworkID)
             {

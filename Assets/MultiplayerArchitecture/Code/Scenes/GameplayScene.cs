@@ -33,8 +33,6 @@ namespace MultiplayerArchitecture.Code.Scenes
         {
             entityLogic.Dispose();
             NetworkFactory.Dispose();
-
-            ServiceProvider.Instance.ClearAllNonPersistanceServices();
         }
     }
 }

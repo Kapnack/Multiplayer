@@ -27,7 +27,7 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     private void HandleClientJoin(NetworkPacket networkPacket)
     {
-       
+
     }
 
     private void HandlePosition(NetworkPacket networkPacket)
@@ -115,10 +115,10 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
     {
         Tick();
 
+        CheckServerIsResponding();
+
         if (NetworkID.Equals(0))
             return;
-
-        CheckServerIsResponding();
 
         SendPing();
     }

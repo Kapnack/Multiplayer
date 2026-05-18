@@ -1,8 +1,11 @@
 ﻿using Assets.Code.Entities;
+using Assets.MultiplayerArchitecture.Code.Entities;
 using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
+using MultiplayerArchitecture;
 using TMPro;
+using UnityEditor.MemoryProfiler;
 using UnityEngine;
 
 namespace Assets.Code.Scenes
@@ -16,6 +19,8 @@ namespace Assets.Code.Scenes
         private EntityLogicView entityLogicView;
         private TMP_Text pingText;
 
+        private GameObject spawnedMap;
+
         private string pingFormat;
 
         public GameplayViewScene(GameObject selectedMap, GameObject bulletPrefab, GameObject bananaPrefab, GameObject oilPrefab, TMP_Text pingText, GameObject userPrefabs, Camera camera)
@@ -23,7 +28,9 @@ namespace Assets.Code.Scenes
             ServiceProvider.Instance.AddService<NetworkRegistryView>(new NetworkRegistryView());
 
             this.pingText = pingText;
-            ServiceProvider.Instance.AddService<MapView>(Object.Instantiate(selectedMap).GetComponent<MapView>());
+            pingText.gameObject.SetActive(true);
+            spawnedMap = Object.Instantiate(selectedMap);
+            ServiceProvider.Instance.AddService<MapView>(spawnedMap.GetComponent<MapView>());
 
             entityFactoryView = new NetworkFactoryView(userPrefabs, bulletPrefab, bananaPrefab, oilPrefab, camera);
             entityLogicView = new EntityLogicView();
@@ -34,6 +41,7 @@ namespace Assets.Code.Scenes
             pingFormat = pingText.text;
             pingText.text = string.Format(pingFormat, GameClient.Ping);
 
+            GameClient.Init();
             entityFactoryView.Init();
             entityLogicView.Init();
         }
@@ -42,20 +50,30 @@ namespace Assets.Code.Scenes
         {
             entityFactoryView.LateInit();
             entityLogicView.LateInit();
+            GameClient.LateInit();
         }
 
         public override void Tick(float deltaTime)
         {
             entityLogicView.Tick(deltaTime);
-
             pingText.text = string.Format(pingFormat, GameClient.Ping);
+            GameClient.Tick(deltaTime);
         }
 
         public override void Dispose()
         {
             entityLogicView.Dispose();
             entityFactoryView.Dispose();
+
+            pingText.gameObject.SetActive(false);
+
+            Object.Destroy(spawnedMap);
+
             ServiceProvider.Instance.RemoveService<NetworkRegistryView>();
+            ServiceProvider.Instance.RemoveService<NetworkRegistry>();
+            ServiceProvider.Instance.RemoveService<MapView>();
+            ServiceProvider.Instance.RemoveService<Map>();
+            ServiceProvider.Instance.RemoveService<NetworkFactory>();
         }
     }
 }

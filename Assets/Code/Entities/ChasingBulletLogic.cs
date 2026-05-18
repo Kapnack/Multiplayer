@@ -54,8 +54,9 @@ namespace Assets.Code.Entities
 
         public void Tick(float deltaTime)
         {
-            foreach (ChasingBulletView chasingBullet in NetworkRegistryView.ChasingBulletView(GameClient.MyID))
-                chasingBullet.Tick(deltaTime);
+            if (ServiceProvider.Instance.ContainsService<NetworkRegistryView>())
+                foreach (ChasingBulletView chasingBullet in NetworkRegistryView.ChasingBulletView(GameClient.MyID))
+                    chasingBullet.Tick(deltaTime);
         }
 
         public void Dispose()

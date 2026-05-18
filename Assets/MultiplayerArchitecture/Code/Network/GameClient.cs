@@ -6,6 +6,7 @@ using ImageCampus.ToolBox.Services;
 using KapNet;
 using MultiplayerArchitecture;
 using MultiplayerArchitecture.Entities;
+using NPOI.SS.Formula.Functions;
 using System;
 
 namespace Assets.MultiplayerArchitecture.Code.Network
@@ -28,16 +29,15 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
         public GameClient()
         {
+            connection = new ClientConnection(this);
         }
 
         public void Init()
         {
-            connection = new ClientConnection(this);
+            connection.Init();
 
             EventBus.Subscribe<LocalObjectMoveEvent>(OnLocalEntityMove);
             EventBus.Subscribe<LocalEntityViewCreatedEvent<Entity>>(OnLocalEntityCreated);
-
-            connection.Init();
         }
 
         private void OnLocalEntityMove(in LocalObjectMoveEvent localObjectMoveEvent)
@@ -102,7 +102,8 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
         public void OnServerShutDown()
         {
-            EventBus.Raise<ServerShutDown>();
+            connection.Disconnect();
+            EventBus.Raise<ChangeSceneEvent>(Scene.MainMenu);
         }
 
         public void Dispose()

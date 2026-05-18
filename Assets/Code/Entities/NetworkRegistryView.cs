@@ -99,6 +99,23 @@ namespace Assets.Code.Entities
             return idByType.ContainsKey(objectNetworkID);
         }
 
+        public IEnumerable<EntityType> AllOfType<EntityType>() where EntityType : EntityView
+        {
+            foreach (var ownerPair in entityIdsPerType)
+            {
+                uint ownerId = ownerPair.Key;
+                Dictionary<Type, List<uint>> typesDict = ownerPair.Value;
+
+                if (!typesDict.TryGetValue(typeof(EntityType), out List<uint> entityList))
+                    continue;
+
+                foreach (uint objectNetworkID in entityList)
+                {
+                    yield return entities[ownerId][objectNetworkID] as EntityType;
+                }
+            }
+        }
+
         private void OnEntityDestroyed(in EntityDestroyedEvent entityDestroyedEvent)
         {
             if (!Contains(entityDestroyedEvent.ownerNetworkID, entityDestroyedEvent.objectNetworkID))

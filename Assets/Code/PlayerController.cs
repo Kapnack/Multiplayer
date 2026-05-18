@@ -24,12 +24,20 @@ public class PlayerController : EntityView
     private bool isSpinning = false;
     private const float speedReduction = 0.20f;
     private Rigidbody rb;
+    private BoxCollider col;
+
+    public int CurrentCheckpointIndex = 0;
+    public int Lap = 0;
+    public float RaceProgress = 0f;
+    public int RacePosition = 0;
+    public bool Finished = false;
 
     public override void Init()
     {
         base.Init();
 
         rb = GetComponent<Rigidbody>();
+        col = GetComponent<BoxCollider>();
     }
 
     public override void Tick(float deltaTime)

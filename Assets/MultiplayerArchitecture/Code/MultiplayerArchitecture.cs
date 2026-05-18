@@ -26,19 +26,16 @@ namespace Multiplayer.Arch
         public void Init()
         {
             EventBus.Subscribe<ChangeSceneEvent>(OnSceneChange);
-            GameClient.Init();
         }
 
         public void LateInit()
         {
             EventBus.Raise<ChangeSceneEvent>(Scene.MainMenu);
-            GameClient.LateInit();
         }
 
         public void Tick(float deltaTime)
         {
             currentScene.Tick(deltaTime);
-            GameClient.Tick(deltaTime);
         }
 
         private void OnSceneChange(in ChangeSceneEvent changeSceneEvent)
