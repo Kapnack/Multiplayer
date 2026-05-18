@@ -53,6 +53,7 @@ namespace MultiplayerArchitecture
             ownerNetworkID = (uint)parameters[0];
             objectNetworkID = (uint)parameters[1];
             coordinateToSpawn = (Coordinate)parameters[2];
+            entityTypeName = (string)parameters[2];
         }
 
         public void Reset()
@@ -60,6 +61,7 @@ namespace MultiplayerArchitecture
             ownerNetworkID = default(uint);
             objectNetworkID = default(uint);
             coordinateToSpawn = default(Coordinate);
+            entityTypeName = default(string);
         }
     }
 }
