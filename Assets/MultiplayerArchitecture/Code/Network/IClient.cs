@@ -8,7 +8,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         void OnClientLeft(uint clientID);
         void OnSpawn(uint clientID, uint entityID, Coordinate coordinate, string entityToSpawn);
         void OnDestroyEntity(uint clientID, uint entityID);
-        void OnPositionRecieve(uint clientID, uint entityID, Coordinate coordinate, Coordinate eulerRotation);
+        void OnPositionRecieve(uint clientID, uint entityID, Coordinate coordinate, Rotation eulerRotation);
         void OnServerShutDown();
     }
 }

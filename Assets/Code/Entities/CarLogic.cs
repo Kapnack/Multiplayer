@@ -40,7 +40,7 @@ namespace Assets.Code.Entities
                 Vector3(networkClientMove.coordinate.x, networkClientMove.coordinate.y, networkClientMove.coordinate.z);
 
             EntityRegistryView.Get(networkClientMove.ownerNetworkID, networkClientMove.objectNetworkID).transform.rotation =
-                Quaternion.Euler(networkClientMove.eulerRotation.x, networkClientMove.eulerRotation.y, networkClientMove.eulerRotation.z);
+                new Quaternion(networkClientMove.rotation.x, networkClientMove.rotation.y, networkClientMove.rotation.z, networkClientMove.rotation.w);
         }
 
         public void Dispose()

@@ -41,7 +41,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
                 return;
 
             EntityRegistry[networkClientMove.ownerNetworkID][networkClientMove.objectNetworkID].coordinate = networkClientMove.coordinate;
-            EntityRegistry[networkClientMove.ownerNetworkID][networkClientMove.objectNetworkID].rotationEuler = networkClientMove.eulerRotation;
+            EntityRegistry[networkClientMove.ownerNetworkID][networkClientMove.objectNetworkID].rotationEuler = networkClientMove.rotation;
         }
 
         public void Dispose()

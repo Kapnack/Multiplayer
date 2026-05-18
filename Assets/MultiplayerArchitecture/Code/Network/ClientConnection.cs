@@ -20,8 +20,14 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
         PacketTypeStrategy.Add(PacketType.ConnectToServer, HandleServerConnection);
         PacketTypeStrategy.Add(PacketType.Spawn, HandleEntitySpawn);
+        PacketTypeStrategy.Add(PacketType.ClientJoined, HandleClientJoin);
         PacketTypeStrategy.Add(PacketType.Destroy, HandleDestroy);
         PacketTypeStrategy.Add(PacketType.Position, HandlePosition);
+    }
+
+    private void HandleClientJoin(NetworkPacket networkPacket)
+    {
+       
     }
 
     private void HandlePosition(NetworkPacket networkPacket)
@@ -29,9 +35,9 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
         uint clientID = packetReader.ReadUInt();
         uint entityID = packetReader.ReadUInt();
         Coordinate coordinate = new Coordinate(packetReader.ReadFloat(), packetReader.ReadFloat(), packetReader.ReadFloat());
-        Coordinate eulerRotation = new Coordinate(packetReader.ReadFloat(), packetReader.ReadFloat(), packetReader.ReadFloat());
+        Rotation rotation = new Rotation(packetReader.ReadFloat(), packetReader.ReadFloat(), packetReader.ReadFloat(), packetReader.ReadFloat());
 
-        client.OnPositionRecieve(clientID, entityID, coordinate, eulerRotation);
+        client.OnPositionRecieve(clientID, entityID, coordinate, rotation);
     }
 
     private void HandleDestroy(NetworkPacket networkPacket)

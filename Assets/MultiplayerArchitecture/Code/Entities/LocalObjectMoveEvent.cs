@@ -7,20 +7,20 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
     {
         public uint objectNetworkID;
         public Coordinate coordinate;
-        public Coordinate rotation;
+        public Rotation rotation;
 
         public void Assign(params object[] parameters)
         {
             objectNetworkID = (uint)parameters[0];
             coordinate = (Coordinate)parameters[1];
-            rotation = (Coordinate)parameters[2];
+            rotation = (Rotation)parameters[2];
         }
 
         public void Reset()
         {
             objectNetworkID = default(uint);
             coordinate = default(Coordinate);
-            rotation = default(Coordinate);
+            rotation = default(Rotation);
         }
     }
 }

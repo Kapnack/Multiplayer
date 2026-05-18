@@ -44,7 +44,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         {
             connection.Send(PacketType.Position, PacketMetaData.None, connection.NetworkID, localObjectMoveEvent.objectNetworkID,
                 localObjectMoveEvent.coordinate.x, localObjectMoveEvent.coordinate.y, localObjectMoveEvent.coordinate.z, 
-                localObjectMoveEvent.rotation.x, localObjectMoveEvent.rotation.y, localObjectMoveEvent.rotation.z);
+                localObjectMoveEvent.rotation.x, localObjectMoveEvent.rotation.y, localObjectMoveEvent.rotation.z, localObjectMoveEvent.rotation.w);
         }
 
         private void OnLocalEntityCreated(in LocalEntityViewCreatedEvent<Entity> entityCreatedEvent)
@@ -94,10 +94,10 @@ namespace Assets.MultiplayerArchitecture.Code.Network
                 EventBus.Raise<EntityDestroyedEvent>(clientID, entityID);
         }
 
-        public void OnPositionRecieve(uint clientID, uint entityID, Coordinate coordinate, Coordinate eulerRotation)
+        public void OnPositionRecieve(uint clientID, uint entityID, Coordinate coordinate, Rotation rotation)
         {
             if (!connection.NetworkID.Equals(clientID))
-                EventBus.Raise<NetworkObjectMoveEvent>(clientID, entityID, coordinate, eulerRotation);
+                EventBus.Raise<NetworkObjectMoveEvent>(clientID, entityID, coordinate, rotation);
         }
 
         public void OnServerShutDown()

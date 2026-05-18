@@ -4,7 +4,7 @@
     {
         public const uint UNASSIGNED_ENTITY_ID = 0;
         public Coordinate coordinate;
-        public Coordinate rotationEuler;
+        public Rotation rotationEuler;
         public uint ownerNetworkID;
         public uint objectNetworkID;
 

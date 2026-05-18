@@ -104,7 +104,8 @@ public class PlayerController : EntityView
         {
             Vector3 newPos = transform.position + velocity * deltaTime;
 
-            EventBus.Raise<LocalObjectMoveEvent>(ArchitectureID, new Coordinate(newPos.x, newPos.y, newPos.z), new Coordinate(transform.rotation.x, transform.rotation.y, transform.rotation.z));
+            EventBus.Raise<LocalObjectMoveEvent>(ArchitectureID, new Coordinate(newPos.x, newPos.y, newPos.z), 
+                new Rotation(transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w));
         }
     }
 
