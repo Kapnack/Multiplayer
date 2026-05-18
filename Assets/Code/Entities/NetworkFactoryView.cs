@@ -127,15 +127,6 @@ namespace Assets.Code.Entities
 
             viewComponent.Init();
             viewComponent.LateInit();
-
-            Type openEventType = typeof(LocalEntityViewCreatedEvent<>);
-            Type closedEventType = openEventType.MakeGenericType(entityType);
-
-            MethodInfo raiseMethod = typeof(EventBus).GetMethod("Raise")
-                .MakeGenericMethod(closedEventType);
-
-            object[] eventParams = new object[] { entityCreated.ownerNetworkID, entityCreated.objectNetworkID, entityCreated.coordinate };
-            raiseMethod.Invoke(EventBus, new object[] { eventParams });
         }
 
         private void OnLocalEntityCreated(in LocalEntityCreatedEvent<Entity> entityCreated)

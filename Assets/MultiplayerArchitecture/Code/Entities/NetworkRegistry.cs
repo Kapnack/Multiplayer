@@ -79,7 +79,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
         public Entity Get(uint ownerNetworkID, uint objectNetworkID)
         {
-            return entities[ownerNetworkID][ownerNetworkID];
+            return entities[ownerNetworkID][objectNetworkID];
         }
 
         public IEnumerable<EntityType> FilterEntities<EntityType>(uint ownerNetworkID) where EntityType : Entity

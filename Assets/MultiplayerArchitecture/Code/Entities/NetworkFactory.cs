@@ -92,7 +92,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
             } while (currentType != typeof(Entity));
 
             for (int i = entityTypes.Count - 1; i >= 0; i--)
-                raiseLocalEntityCreatedMethod.MakeGenericMethod(entityTypes[i]).Invoke(this, new object[] { newEntity });
+                raiseLocalEntityCreatedMethod.MakeGenericMethod(entityTypes[i]).Invoke(this, new object[] { newEntity});
         }
 
         private void RaseEntityRequestAccepted<EntityType>(NetworkSpawnRequestAcceptedEvent spawnRequestAcceptedEvent) where EntityType : Entity
