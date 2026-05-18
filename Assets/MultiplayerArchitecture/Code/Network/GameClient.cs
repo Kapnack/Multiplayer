@@ -35,7 +35,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
 
             EventBus.Subscribe<LocalObjectMoveEvent>(OnLocalEntityMove);
             EventBus.Subscribe<EntityViewCreatedEvent<Entity>>(OnLocalEntityCreated);
-            
+
             connection.Init();
         }
 
@@ -78,7 +78,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         {
             connection.NetworkID = myID;
 
-            EventBus.Raise<LocalSpawnRequestAcceptedEvent<Player>>(connection.NetworkID);
+            EventBus.Raise<LocalSpawnRequestAcceptedEvent<Player>>(connection.NetworkID, new Coordinate(0f, 0f, 0f));
         }
 
         public void OnSpawn(uint clientID, uint entityID, Coordinate coordinate, string entityToSpawn)

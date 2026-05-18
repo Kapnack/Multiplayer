@@ -71,7 +71,8 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     protected override void HandleHandShake(NetworkPacket networkPacket)
     {
-        NetworkID = packetReader.ReadUInt();
+        uint id = packetReader.ReadUInt();
+        NetworkID = id;
         byte[] encryptionSeed = packetReader.ReadBytes();
 
         packetEncryptor = new PacketEncryptor(encryptionSeed);
@@ -86,7 +87,7 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     void SendPing()
     {
-        Send(PacketType.Ping, PacketMetaData.None, BitConverter.GetBytes(DateTime.UtcNow.Ticks));
+        Send(PacketType.Ping, PacketMetaData.None, DateTime.UtcNow.Ticks);
     }
 
     protected override void HandleClientLeft(NetworkPacket packet)
@@ -124,7 +125,7 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     protected override void HandlePing(NetworkPacket networkPacket)
     {
-        long ticks = BitConverter.ToInt64(networkPacket.payload, 0);
+        long ticks = packetReader.ReadLong();
 
         DateTime sendTime = new DateTime(ticks, DateTimeKind.Utc);
 

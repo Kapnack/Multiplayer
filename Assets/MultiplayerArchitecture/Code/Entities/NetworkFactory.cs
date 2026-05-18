@@ -59,7 +59,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
         {
             object newEntity = entityConstructors[typeof(EntityType)].Invoke(new object[] { ownerNetworkID, objectNetworkID, coordinate });
 
-            registerNetworkObjectMethod.Invoke(NetworkRegistry, new object[] { newEntity });
+            registerNetworkObjectMethod.Invoke(NetworkRegistry, new object[] { newEntity as Entity });
 
             List<Type> entityTypes = new List<Type>();
             Type currentType = null;

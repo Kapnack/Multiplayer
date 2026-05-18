@@ -133,7 +133,7 @@ namespace Assets.Code.Entities
             MethodInfo raiseMethod = typeof(EventBus).GetMethod("Raise")
                 .MakeGenericMethod(closedEventType);
 
-            object[] eventParams = new object[] { entityCreated.ownerNetworkID, entityCreated.objectNetworkID };
+            object[] eventParams = new object[] { entityCreated.ownerNetworkID, entityCreated.objectNetworkID, entityCreated.coordinate };
             raiseMethod.Invoke(EventBus, new object[] { eventParams });
         }
 
