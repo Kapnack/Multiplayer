@@ -1,5 +1,0 @@
-<Solution>
-  <Project Path="Architecture/Architecture.csproj" Id="71d53e93-3df3-4f83-9eee-2f052e18098c" />
-  <Project Path="ToolBox/ToolBox.csproj" Id="09b53b62-1c43-4e6e-931c-a5bc6b189129" />
-  <Project Path="View/View.csproj" Id="2489bddb-4204-4ac5-b0e8-d32cfc2e4846" />
-</Solution>
