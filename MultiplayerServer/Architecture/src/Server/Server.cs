@@ -38,10 +38,13 @@ namespace KapNet
         private bool isConnectedToMatchMaking = false;
 
         private byte[] encryptorSeed;
+        uint levelID = 0;
 
-        internal Server(string matchMakingIP, int portToConnect, int portToHost) : base()
+        internal Server(string matchMakingIP, int portToConnect, int portToHost, uint levelID) : base()
         {
             InitEncryption();
+
+            this.levelID = levelID;
 
             matchMakerData = new MatchMakerData();
 
@@ -50,13 +53,9 @@ namespace KapNet
             IPAddress ipAddress = IPAddress.Parse(matchMakingIP);
             matchMakerData.IPEndPoint = new IPEndPoint(ipAddress, portToConnect);
 
-            Send(matchMakerData.IPEndPoint, PacketType.Handshake, PacketMetaData.Reliable, ConnectionRole.Server);
+            Send(matchMakerData.IPEndPoint, PacketType.Handshake, PacketMetaData.Reliable, (byte)ConnectionRole.Server, levelID);
 
             isConnectedToMatchMaking = true;
-        }
-
-        internal Server(int asd) : base()
-        {
         }
 
         internal Server() : base()
@@ -64,12 +63,6 @@ namespace KapNet
             InitEncryption();
 
             Connect(7777);
-
-            using (Server newServer = new Server(1))
-            {
-                newServer.Connect("127.0.0.1", 7777);
-                newServer.Send(PacketType.Ping, PacketMetaData.None, DateTime.UtcNow.Ticks);
-            }
         }
 
         private void InitEncryption()
@@ -107,9 +100,9 @@ namespace KapNet
                 isConnectedToMatchMaking = false;
         }
 
-        protected override void HandleUnhandledPacket(IPEndPoint sender, byte[] data)
+        protected override void HandleUnhandledPacket(NetworkPacket networkPacket)
         {
-            BroadcastRaw(sender, data);
+            Broadcast(networkPacket);
         }
 
         private void SendPingToMatchMaker()
@@ -195,23 +188,31 @@ namespace KapNet
             DisconectClient(packet.ipEndPoint);
         }
 
-        void Broadcast(PacketType type, PacketMetaData metaData = PacketMetaData.None, params object[] parameters)
+        void Broadcast(IPEndPoint expection, PacketType type, PacketMetaData metaData = PacketMetaData.None, params object[] parameters)
         {
             foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
             {
-                Send(client.Key, type, metaData, parameters);
-            }
-        }
-
-        void Broadcast(IPEndPoint exception, PacketType type, PacketMetaData metaData = PacketMetaData.None, params object[] parameters)
-        {
-            foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
-            {
-                if (!client.Value.isConnected || client.Key.Equals(exception))
+                if (!client.Value.isConnected || client.Key.Equals(expection))
                     continue;
 
                 Send(client.Key, type, metaData, parameters);
             }
+        }
+
+        void Broadcast(NetworkPacket networkPacket)
+        {
+            foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
+            {
+                if (!client.Value.isConnected || client.Key.Equals(networkPacket.ipEndPoint))
+                    continue;
+
+                SendByteArrayRaw(networkPacket.type, networkPacket.metaData, networkPacket.payload);
+            }
+        }
+
+        void Fowarded(IPEndPoint expetion, NetworkPacket networkPacket)
+        {
+
         }
 
         void BroadcastRaw(IPEndPoint exception, byte[] data)

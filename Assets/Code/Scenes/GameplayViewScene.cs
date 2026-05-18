@@ -5,7 +5,6 @@ using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using MultiplayerArchitecture;
 using TMPro;
-using UnityEditor.MemoryProfiler;
 using UnityEngine;
 
 namespace Assets.Code.Scenes
@@ -70,10 +69,8 @@ namespace Assets.Code.Scenes
             Object.Destroy(spawnedMap);
 
             ServiceProvider.Instance.RemoveService<NetworkRegistryView>();
-            ServiceProvider.Instance.RemoveService<NetworkRegistry>();
             ServiceProvider.Instance.RemoveService<MapView>();
             ServiceProvider.Instance.RemoveService<Map>();
-            ServiceProvider.Instance.RemoveService<NetworkFactory>();
         }
     }
 }

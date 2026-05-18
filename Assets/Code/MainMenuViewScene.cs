@@ -56,10 +56,10 @@ namespace Assets.Code
             return !(nameText.text.Equals("") || ipText.text.Equals(""));
         }
 
-        private void SendHandshake(string userName, int mapID)
+        private void SendHandshake(string userName, Maps mapID)
         {
             GameClient.connection.Connect(ipText.text, 7777);
-            GameClient.connection.Send(PacketType.Handshake, PacketMetaData.Reliable, mapID, userName.Length, userName);
+            GameClient.connection.Send(PacketType.Handshake, PacketMetaData.Reliable, (byte)ConnectionRole.Client, (uint)mapID, userName);
         }
 
         private void OnConnectToMap1()
@@ -68,7 +68,7 @@ namespace Assets.Code
                 return;
 
             MapToLoad.mapToLoad = Maps.Forest;
-            SendHandshake(nameText.text, 1);
+            SendHandshake(nameText.text, MapToLoad.mapToLoad);
         }
 
         private void OnConnectToMap2()
@@ -77,7 +77,7 @@ namespace Assets.Code
                 return;
 
             MapToLoad.mapToLoad = Maps.Snow;
-            SendHandshake(nameText.text, 2);
+            SendHandshake(nameText.text, MapToLoad.mapToLoad);
         }
 
         public override void Dispose()

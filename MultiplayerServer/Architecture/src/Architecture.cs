@@ -32,7 +32,13 @@ namespace MultiplayerServer.src
                     return;
                 }
 
-                server = new Server(matchMakingAdress, portToConnect, portToHost);
+                if (!uint.TryParse(args[3], out uint levelID))
+                {
+                    Console.WriteLine("Invalid levelID");
+                    return;
+                }
+
+                server = new Server(matchMakingAdress, portToConnect, portToHost, levelID);
             
                 return;
             }

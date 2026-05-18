@@ -112,5 +112,10 @@ namespace Assets.MultiplayerArchitecture.Code.Network
             EventBus.Unsubscribe<LocalObjectMoveEvent>(OnLocalEntityMove);
             EventBus.Unsubscribe<LocalEntityViewCreatedEvent<Entity>>(OnLocalEntityCreated);
         }
+
+        public void OnRejectedQueue()
+        {
+            OnServerShutDown();
+        }
     }
 }

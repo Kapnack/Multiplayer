@@ -23,6 +23,12 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
         PacketTypeStrategy.Add(PacketType.ClientJoined, HandleClientJoin);
         PacketTypeStrategy.Add(PacketType.Destroy, HandleDestroy);
         PacketTypeStrategy.Add(PacketType.Position, HandlePosition);
+        PacketTypeStrategy.Add(PacketType.RejectedQueue, HandleRejectedQueue);
+    }
+
+    private void HandleRejectedQueue(NetworkPacket networkPacket)
+    {
+        client.OnRejectedQueue();
     }
 
     private void HandleClientJoin(NetworkPacket networkPacket)
@@ -62,18 +68,13 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
     {
         byte[] ipBytes = packetReader.ReadBytes();
 
-        byte[] portBytes = packetReader.ReadBytes();
+        int port = packetReader.ReadInt();
 
         IPAddress ipAddress = new IPAddress(ipBytes);
-        int port = BitConverter.ToInt32(portBytes, 0);
-
-        Send(PacketType.ClientLeft);
-
-        Disconnect();
 
         Connect(ipAddress, port);
 
-        Send(PacketType.Handshake);
+        Send(PacketType.Handshake, PacketMetaData.Reliable);
     }
 
     protected override void HandleHandShake(NetworkPacket networkPacket)
@@ -115,18 +116,13 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
     {
         Tick();
 
-        CheckServerIsResponding();
-
-        if (NetworkID.Equals(0))
-            return;
-
         SendPing();
+
+        CheckServerIsResponding();
     }
 
     public void Dispose()
     {
-        Send(PacketType.ClientLeft);
-
         Disconnect();
     }
 
@@ -143,7 +139,7 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
         lastServerResponce = utcNow;
     }
 
-    protected override void HandleUnhandledPacket(IPEndPoint packet, byte[] data)
+    protected override void HandleUnhandledPacket(NetworkPacket networkPacket)
     {
     }
 }
