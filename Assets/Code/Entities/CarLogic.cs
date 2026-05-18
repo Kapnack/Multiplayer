@@ -33,7 +33,7 @@ namespace Assets.Code.Entities
 
         private void OnEntityMove(in NetworkObjectMoveEvent networkClientMove)
         {
-            if (!EntityRegistryView.Contains(networkClientMove.ownerNetworkID, networkClientMove.ownerNetworkID))
+            if (!EntityRegistryView.Contains(networkClientMove.ownerNetworkID, networkClientMove.objectNetworkID))
                 return;
 
             EntityRegistryView.Get(networkClientMove.ownerNetworkID, networkClientMove.objectNetworkID).transform.position = new
