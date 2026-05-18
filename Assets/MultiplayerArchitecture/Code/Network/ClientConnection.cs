@@ -29,8 +29,9 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
         uint clientID = packetReader.ReadUInt();
         uint entityID = packetReader.ReadUInt();
         Coordinate coordinate = new Coordinate(packetReader.ReadFloat(), packetReader.ReadFloat(), packetReader.ReadFloat());
+        Coordinate eulerRotation = new Coordinate(packetReader.ReadFloat(), packetReader.ReadFloat(), packetReader.ReadFloat());
 
-        client.OnPositionRecieve(clientID, entityID, coordinate);
+        client.OnPositionRecieve(clientID, entityID, coordinate, eulerRotation);
     }
 
     private void HandleDestroy(NetworkPacket networkPacket)

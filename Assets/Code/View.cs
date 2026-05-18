@@ -30,7 +30,6 @@ namespace Assets.Code
         [SerializeField] private TMP_Text pingText;
 
         [SerializeField] private InputField nameText;
-        [SerializeField] private InputField levelText;
         [SerializeField] private InputField ip;
         [SerializeField] private Button connect;
         [SerializeField] private Button connect2;
@@ -57,7 +56,6 @@ namespace Assets.Code
             pingText.gameObject.SetActive(false);
             pingText.gameObject.SetActive(false);
             nameText.gameObject.SetActive(false);
-            levelText.gameObject.SetActive(false);
             ip.gameObject.SetActive(false);
             connect.gameObject.SetActive(false);
             connect2.gameObject.SetActive(false);
@@ -100,7 +98,7 @@ namespace Assets.Code
             }
 
             ServiceProvider.Instance.AddService<BaseSceneView>(changeSceneEvent.scene == Scene.MainMenu ?
-                new MainMenuViewScene(nameText, ip, levelText, connect, connect2) :
+                new MainMenuViewScene(nameText, ip, connect, connect2) :
                 new GameplayViewScene(mapsByEnum[MapToLoad.mapToLoad], bulletPrefab, bananaPrefab, oilPrefab, pingText, usersPrefabs, cam));
 
             CurrentScene.Init();

@@ -21,14 +21,14 @@ namespace Assets.Code.Entities
 
         public void Init()
         {
-            EventBus.Subscribe<EntityViewCreatedEvent<ChasingBullet>>(OnBulletCreated);
+            EventBus.Subscribe<LocalEntityViewCreatedEvent<ChasingBullet>>(OnBulletCreated);
         }
         public void LateInit()
         {
 
         }
 
-        private void OnBulletCreated(in EntityViewCreatedEvent<ChasingBullet> entityViewCreatedEvent)
+        private void OnBulletCreated(in LocalEntityViewCreatedEvent<ChasingBullet> entityViewCreatedEvent)
         {
             if (entityViewCreatedEvent.ownerNetworkID != GameClient.MyID)
                 return;
@@ -60,7 +60,7 @@ namespace Assets.Code.Entities
 
         public void Dispose()
         {
-            EventBus.Unsubscribe<EntityViewCreatedEvent<ChasingBullet>>(OnBulletCreated);
+            EventBus.Unsubscribe<LocalEntityViewCreatedEvent<ChasingBullet>>(OnBulletCreated);
         }
     }
 }

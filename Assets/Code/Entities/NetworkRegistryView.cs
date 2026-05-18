@@ -91,8 +91,19 @@ namespace Assets.Code.Entities
                         yield return entities[ownerNetworkID][objectNetworkID] as EntityType;
         }
 
+        public bool Contains(uint ownerNetworkID, uint objectNetworkID)
+        {
+            if (!entities.TryGetValue(ownerNetworkID, out Dictionary<uint, EntityView> idByType))
+                return false;
+
+            return idByType.ContainsKey(objectNetworkID);
+        }
+
         private void OnEntityDestroyed(in EntityDestroyedEvent entityDestroyedEvent)
         {
+            if (!Contains(entityDestroyedEvent.ownerNetworkID, entityDestroyedEvent.objectNetworkID))
+                return;
+
             EntityView entityView = entities[entityDestroyedEvent.ownerNetworkID][entityDestroyedEvent.objectNetworkID];
             entityView.Dispose();
             entities[entityDestroyedEvent.ownerNetworkID].Remove(entityDestroyedEvent.objectNetworkID);

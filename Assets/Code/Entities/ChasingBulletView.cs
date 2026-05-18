@@ -1,11 +1,12 @@
 ﻿using Assets.Code.Entities;
+using Assets.MultiplayerArchitecture.Code.Entities;
 using Assets.MultiplayerArchitecture.Code.Entities.Events;
 using ImageCampus.ToolBox.Events;
 using ImageCampus.ToolBox.Services;
 using MultiplayerArchitecture;
-using UnityEngine;
-using MutliplayerView.Game.Mapping;
 using MultiplayerView;
+using MutliplayerView.Game.Mapping;
+using UnityEngine;
 
 [ViewOf(typeof(ChasingBullet))]
 public class ChasingBulletView : EntityView
@@ -80,7 +81,7 @@ public class ChasingBulletView : EntityView
 
         transform.position += transform.forward * speed * deltaTime;
 
-        EventBus.Raise<NetworkObjectMoveEvent>(OwnerNetworkID, ArchitectureID, new Coordinate(transform.position.x, transform.position.y, transform.position.z));
+        EventBus.Raise<LocalObjectMoveEvent>(ArchitectureID, new Coordinate(transform.position.x, transform.position.y, transform.position.z), new Coordinate(transform.rotation.x, transform.rotation.y, transform.rotation.z));
     }
 
     private int GetNearestMarkerToPosition(Vector3 position)

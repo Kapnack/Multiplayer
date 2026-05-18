@@ -34,6 +34,14 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
             entities[entityDestroyedEvent.ownerNetworkID].Remove(entityDestroyedEvent.objectNetworkID);
         }
 
+        public bool Contains(uint owerNetworkID, uint objectNetworkID)
+        {
+            if (!entities.TryGetValue(owerNetworkID, out Dictionary<uint, Entity> idByType))
+                return false;
+
+            return idByType.ContainsKey(objectNetworkID);
+        }
+
         private void Register(Entity entity)
         {
             if (!entities.ContainsKey(entity.ownerNetworkID))

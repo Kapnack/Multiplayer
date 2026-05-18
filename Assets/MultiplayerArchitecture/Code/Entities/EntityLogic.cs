@@ -23,7 +23,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
         private void OnClientLeft(in ClientLeft clientLeft)
         {
-            
+
         }
 
         private void OnPlayerMove(in LocalObjectMoveEvent playerMove)
@@ -57,7 +57,11 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
         private void OnEntityMove(in NetworkObjectMoveEvent networkClientMove)
         {
+            if (!EntityRegistry.Contains(networkClientMove.ownerNetworkID, networkClientMove.objectNetworkID))
+                return;
+
             EntityRegistry[networkClientMove.ownerNetworkID][networkClientMove.objectNetworkID].coordinate = networkClientMove.coordinate;
+            EntityRegistry[networkClientMove.ownerNetworkID][networkClientMove.objectNetworkID].rotationEuler = networkClientMove.eulerRotation;
         }
 
         public void Dispose()

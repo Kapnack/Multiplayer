@@ -106,6 +106,7 @@ namespace Assets.Code.Entities
         public void LateInit()
         {
             EventBus.Subscribe<EntityCreatedEvent<Entity>>(OnEntityCreated);
+            EventBus.Subscribe<LocalEntityCreatedEvent<Entity>>(OnLocalEntityCreated);
         }
 
         private void OnEntityCreated(in EntityCreatedEvent<Entity> entityCreated)
@@ -127,7 +128,7 @@ namespace Assets.Code.Entities
             viewComponent.Init();
             viewComponent.LateInit();
 
-            Type openEventType = typeof(EntityViewCreatedEvent<>);
+            Type openEventType = typeof(LocalEntityViewCreatedEvent<>);
             Type closedEventType = openEventType.MakeGenericType(entityType);
 
             MethodInfo raiseMethod = typeof(EventBus).GetMethod("Raise")
@@ -135,6 +136,28 @@ namespace Assets.Code.Entities
 
             object[] eventParams = new object[] { entityCreated.ownerNetworkID, entityCreated.objectNetworkID, entityCreated.coordinate };
             raiseMethod.Invoke(EventBus, new object[] { eventParams });
+        }
+
+        private void OnLocalEntityCreated(in LocalEntityCreatedEvent<Entity> entityCreated)
+        {
+            Type entityType = EntityRegistry.Get<Entity>(entityCreated.ownerNetworkID, entityCreated.objectNetworkID).GetType();
+            string entityName = entityType.Name + ". Owner: " + entityCreated.ownerNetworkID + ". ObjectID: " + entityCreated.objectNetworkID + ".";
+
+            ViewComponent viewComponent = BaseSceneView.AddSceneComponent(ViewArchitectureMap.ViewOf(entityType), entityName, null, prefabsOfTypes.ContainsKey(entityType) ? prefabsOfTypes[entityType] : null);
+
+            setEntityIdMethod.Invoke(viewComponent, new object[] { entityCreated.ownerNetworkID, entityCreated.objectNetworkID });
+
+            registerEntityMethodView.Invoke(EntityRegistryView, new object[] { viewComponent });
+
+            viewComponent.transform.position = BaseSceneView.CoordinateToWorld(entityCreated.coordinate);
+
+            if (componentAssigner.TryGetValue(entityType, out ComponentAssigner assigner))
+                assigner(viewComponent);
+
+            viewComponent.Init();
+            viewComponent.LateInit();
+
+            EventBus.Raise<LocalEntityViewCreatedEvent<Entity>>(entityCreated.ownerNetworkID, entityCreated.objectNetworkID, entityCreated.coordinate);
         }
 
         private void PlayerComponents(ViewComponent viewComponent)
@@ -174,20 +197,6 @@ namespace Assets.Code.Entities
                 ? Color.green : Color.red;
 
             Vector3 spawnPos = gameObject.transform.position;
-
-            if (NavMesh.SamplePosition(spawnPos, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
-            {
-                gameObject.transform.position = hit.position + Vector3.up * (gameObject.transform.localScale.y * 0.5f);
-                NavMeshAgent navMesh = gameObject.AddComponent<NavMeshAgent>();
-                navMesh.stoppingDistance = 0.1f;
-                navMesh.speed = 25.0f;
-                navMesh.autoBraking = false;
-                navMesh.enabled = true;
-            }
-            else
-            {
-                Debug.LogError("Could not find a NavMesh near the spawn position! Bullet cannot be created.");
-            }
         }
 
         private void BananaComponenets(ViewComponent viewComponent)
@@ -209,6 +218,7 @@ namespace Assets.Code.Entities
         public void Dispose()
         {
             EventBus.Unsubscribe<EntityCreatedEvent<Entity>>(OnEntityCreated);
+            EventBus.Unsubscribe<LocalEntityCreatedEvent<Entity>>(OnLocalEntityCreated);
         }
     }
 }

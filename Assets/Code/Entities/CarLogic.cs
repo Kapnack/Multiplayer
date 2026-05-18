@@ -33,7 +33,14 @@ namespace Assets.Code.Entities
 
         private void OnEntityMove(in NetworkObjectMoveEvent networkClientMove)
         {
-            EntityRegistryView.Get(networkClientMove.ownerNetworkID, networkClientMove.objectNetworkID).transform.position = new Vector3(networkClientMove.coordinate.x, networkClientMove.coordinate.y, networkClientMove.coordinate.z);
+            if (!EntityRegistryView.Contains(networkClientMove.ownerNetworkID, networkClientMove.ownerNetworkID))
+                return;
+
+            EntityRegistryView.Get(networkClientMove.ownerNetworkID, networkClientMove.objectNetworkID).transform.position = new
+                Vector3(networkClientMove.coordinate.x, networkClientMove.coordinate.y, networkClientMove.coordinate.z);
+
+            EntityRegistryView.Get(networkClientMove.ownerNetworkID, networkClientMove.objectNetworkID).transform.rotation =
+                Quaternion.Euler(networkClientMove.eulerRotation.x, networkClientMove.eulerRotation.y, networkClientMove.eulerRotation.z);
         }
 
         public void Dispose()

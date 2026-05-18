@@ -6,14 +6,15 @@ using ImageCampus.ToolBox.Services;
 using KapNet;
 using MultiplayerArchitecture;
 using MultiplayerArchitecture.Entities;
-using Org.BouncyCastle.Asn1.Cms;
 using System;
 
 namespace Assets.MultiplayerArchitecture.Code.Network
 {
     public class GameClient : IClient, IInitable, IDisposable, ITickable, IService
     {
-        EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
+        EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();  
+
+        Map Map => ServiceProvider.Instance.GetService<Map>();
 
         NetworkRegistry NetworkRegistry => ServiceProvider.Instance.GetService<NetworkRegistry>();
 
@@ -34,7 +35,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
             connection = new ClientConnection(this);
 
             EventBus.Subscribe<LocalObjectMoveEvent>(OnLocalEntityMove);
-            EventBus.Subscribe<EntityViewCreatedEvent<Entity>>(OnLocalEntityCreated);
+            EventBus.Subscribe<LocalEntityViewCreatedEvent<Entity>>(OnLocalEntityCreated);
 
             connection.Init();
         }
@@ -42,16 +43,16 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         private void OnLocalEntityMove(in LocalObjectMoveEvent localObjectMoveEvent)
         {
             connection.Send(PacketType.Position, PacketMetaData.None, connection.NetworkID, localObjectMoveEvent.objectNetworkID,
-                localObjectMoveEvent.coordinate.x, localObjectMoveEvent.coordinate.y, localObjectMoveEvent.coordinate.z);
+                localObjectMoveEvent.coordinate.x, localObjectMoveEvent.coordinate.y, localObjectMoveEvent.coordinate.z, 
+                localObjectMoveEvent.rotation.x, localObjectMoveEvent.rotation.y, localObjectMoveEvent.rotation.z);
         }
 
-        private void OnLocalEntityCreated(in EntityViewCreatedEvent<Entity> entityCreatedEvent)
+        private void OnLocalEntityCreated(in LocalEntityViewCreatedEvent<Entity> entityCreatedEvent)
         {
             string entityCreated = NetworkRegistry.Get(entityCreatedEvent.ownerNetworkID, entityCreatedEvent.objectNetworkID).GetType().Name;
 
-            connection.Send(PacketType.Spawn, PacketMetaData.None, connection.NetworkID, entityCreatedEvent.objectNetworkID,
-                entityCreatedEvent.coordinate.x, entityCreatedEvent.coordinate.y, entityCreatedEvent.coordinate.z,
-               entityCreated.Length, entityCreated);
+            connection.Send(PacketType.Spawn, PacketMetaData.Reliable, connection.NetworkID, entityCreatedEvent.objectNetworkID,
+                entityCreatedEvent.coordinate.x, entityCreatedEvent.coordinate.y, entityCreatedEvent.coordinate.z, entityCreated);
         }
 
         public void Tick(float deltaTime)
@@ -78,7 +79,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         {
             connection.NetworkID = myID;
 
-            EventBus.Raise<LocalSpawnRequestAcceptedEvent<Player>>(connection.NetworkID, new Coordinate(0f, 0f, 0f));
+            EventBus.Raise<LocalSpawnRequestAcceptedEvent<Player>>(connection.NetworkID, Map[(int)MyID % Map.SpawnPointCount]);
         }
 
         public void OnSpawn(uint clientID, uint entityID, Coordinate coordinate, string entityToSpawn)
@@ -93,10 +94,10 @@ namespace Assets.MultiplayerArchitecture.Code.Network
                 EventBus.Raise<EntityDestroyedEvent>(clientID, entityID);
         }
 
-        public void OnPositionRecieve(uint clientID, uint entityID, Coordinate coordinate)
+        public void OnPositionRecieve(uint clientID, uint entityID, Coordinate coordinate, Coordinate eulerRotation)
         {
             if (!connection.NetworkID.Equals(clientID))
-                EventBus.Raise<NetworkObjectMoveEvent>(clientID, entityID, coordinate);
+                EventBus.Raise<NetworkObjectMoveEvent>(clientID, entityID, coordinate, eulerRotation);
         }
 
         public void OnServerShutDown()
@@ -108,7 +109,7 @@ namespace Assets.MultiplayerArchitecture.Code.Network
         {
             connection.Dispose();
             EventBus.Unsubscribe<LocalObjectMoveEvent>(OnLocalEntityMove);
-            EventBus.Unsubscribe<EntityViewCreatedEvent<Entity>>(OnLocalEntityCreated);
+            EventBus.Unsubscribe<LocalEntityViewCreatedEvent<Entity>>(OnLocalEntityCreated);
         }
     }
 }

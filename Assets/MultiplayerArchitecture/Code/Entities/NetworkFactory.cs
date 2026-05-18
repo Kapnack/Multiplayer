@@ -23,6 +23,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
         private Dictionary<Type, ConstructorInfo> entityConstructors;
         private MethodInfo registerNetworkObjectMethod;
         private MethodInfo raiseEntityCreatedMethod;
+        private MethodInfo raiseLocalEntityCreatedMethod;
 
         private Dictionary<Type, object> creationSubsctiptions;
         private MethodInfo subscriveToCreationMethod;
@@ -39,6 +40,7 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
             registerNetworkObjectMethod = NetworkRegistry.GetType().GetMethod(NetworkRegistry.RegisterMethodName, BindingFlags.NonPublic | BindingFlags.Instance);
 
             raiseEntityCreatedMethod = GetType().GetMethod(nameof(RaiseEntityCreated), BindingFlags.NonPublic | BindingFlags.Instance);
+            raiseLocalEntityCreatedMethod = GetType().GetMethod(nameof(RaiseLocalEntityCreated), BindingFlags.NonPublic | BindingFlags.Instance);
 
             subscriveToCreationMethod = GetType().GetMethod(nameof(SubscribeToCreation), BindingFlags.NonPublic | BindingFlags.Instance);
             raiseEntityRequestAcceptedMethd = GetType().GetMethod(nameof(RaseEntityRequestAccepted), BindingFlags.NonPublic | BindingFlags.Instance);
@@ -74,6 +76,25 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
                 raiseEntityCreatedMethod.MakeGenericMethod(entityTypes[i]).Invoke(this, new object[] { newEntity });
         }
 
+        private void LocalCreateInstance<EntityType>(uint ownerNetworkID, uint objectNetworkID, Coordinate coordinate)
+        {
+            object newEntity = entityConstructors[typeof(EntityType)].Invoke(new object[] { ownerNetworkID, objectNetworkID, coordinate });
+
+            registerNetworkObjectMethod.Invoke(NetworkRegistry, new object[] { newEntity as Entity });
+
+            List<Type> entityTypes = new List<Type>();
+            Type currentType = null;
+
+            do
+            {
+                currentType = currentType == null ? newEntity.GetType() : currentType.BaseType;
+                entityTypes.Add(currentType);
+            } while (currentType != typeof(Entity));
+
+            for (int i = entityTypes.Count - 1; i >= 0; i--)
+                raiseLocalEntityCreatedMethod.MakeGenericMethod(entityTypes[i]).Invoke(this, new object[] { newEntity });
+        }
+
         private void RaseEntityRequestAccepted<EntityType>(NetworkSpawnRequestAcceptedEvent spawnRequestAcceptedEvent) where EntityType : Entity
         {
             EventBus.Raise<NetworkSpawnRequestAcceptedEvent<EntityType>>(spawnRequestAcceptedEvent.coordinateToSpawn, spawnRequestAcceptedEvent.entityTypeName);
@@ -95,13 +116,18 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
 
             void SpawnEntity(in LocalSpawnRequestAcceptedEvent<EntityType> spawnRequestAcceptedEvent)
             {
-                CreateInstance<EntityType>(spawnRequestAcceptedEvent.ownerNetworkID, ++currentEntityID, spawnRequestAcceptedEvent.coordinateToSpawn);
+                LocalCreateInstance<EntityType>(spawnRequestAcceptedEvent.ownerNetworkID, ++currentEntityID, spawnRequestAcceptedEvent.coordinateToSpawn);
             }
         }
 
         private void RaiseEntityCreated<EntityType>(EntityType newEntity) where EntityType : Entity
         {
             EventBus.Raise<EntityCreatedEvent<EntityType>>(newEntity.ownerNetworkID, newEntity.objectNetworkID, newEntity.coordinate);
+        }
+
+        private void RaiseLocalEntityCreated<EntityType>(EntityType newEntity) where EntityType : Entity
+        {
+            EventBus.Raise<LocalEntityCreatedEvent<EntityType>>(newEntity.ownerNetworkID, newEntity.objectNetworkID, newEntity.coordinate);
         }
 
         private void RegisterEntityMethods()
