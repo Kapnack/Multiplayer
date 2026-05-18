@@ -13,6 +13,7 @@ namespace Assets.Code.Scenes
     {
         GameClient GameClient => ServiceProvider.Instance.GetService<GameClient>();
         EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
+        NetworkRegistryView NetworkRegistryView => ServiceProvider.Instance.GetService<NetworkRegistryView>();
 
         private NetworkFactoryView entityFactoryView;
         private EntityLogicView entityLogicView;
@@ -65,6 +66,8 @@ namespace Assets.Code.Scenes
             entityFactoryView.Dispose();
 
             pingText.gameObject.SetActive(false);
+
+            NetworkRegistryView.Dispose();
 
             Object.Destroy(spawnedMap);
 

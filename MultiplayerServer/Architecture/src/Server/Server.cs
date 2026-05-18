@@ -210,22 +210,6 @@ namespace KapNet
             }
         }
 
-        void Fowarded(IPEndPoint expetion, NetworkPacket networkPacket)
-        {
-
-        }
-
-        void BroadcastRaw(IPEndPoint exception, byte[] data)
-        {
-            foreach (KeyValuePair<IPEndPoint, ClientData> client in clients)
-            {
-                if (client.Key.Equals(exception))
-                    continue;
-
-                SendRaw(data, client.Key);
-            }
-        }
-
         void DisconectClient(IPEndPoint ip)
         {
             if (!clients.ContainsKey(ip))

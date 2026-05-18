@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 namespace Assets.Code.Entities
 {
-    internal class NetworkRegistryView : IService
+    internal class NetworkRegistryView : IService, IDisposable
     {
         EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
         public bool IsPersistance => false;
@@ -126,6 +126,13 @@ namespace Assets.Code.Entities
             entities[entityDestroyedEvent.ownerNetworkID].Remove(entityDestroyedEvent.objectNetworkID);
             entityIdsPerType[entityDestroyedEvent.ownerNetworkID][entityView.GetType()].Remove(entityDestroyedEvent.objectNetworkID);
             UnityEngine.Object.Destroy(entityView.gameObject);
+        }
+
+        public void Dispose()
+        {
+            foreach (KeyValuePair<uint, Dictionary<uint, EntityView>> ownerDictionary in entities)
+                foreach (KeyValuePair<uint, EntityView> entityDictionary in ownerDictionary.Value)
+                    UnityEngine.Object.Destroy(entityDictionary.Value);
         }
     }
 }
