@@ -82,6 +82,23 @@ namespace Assets.MultiplayerArchitecture.Code.Entities
             return entities[ownerNetworkID][objectNetworkID];
         }
 
+        public IEnumerable<EntityType> AllOfType<EntityType>() where EntityType : Entity
+        {
+            foreach (var ownerPair in entityIdsPerType)
+            {
+                uint ownerId = ownerPair.Key;
+                Dictionary<Type, List<uint>> typesDict = ownerPair.Value;
+
+                if (!typesDict.TryGetValue(typeof(EntityType), out List<uint> entityList))
+                    continue;
+
+                foreach (uint objectNetworkID in entityList)
+                {
+                    yield return entities[ownerId][objectNetworkID] as EntityType;
+                }
+            }
+        }
+
         public IEnumerable<EntityType> FilterEntities<EntityType>(uint ownerNetworkID) where EntityType : Entity
         {
             if (entityIdsPerType.ContainsKey(ownerNetworkID))

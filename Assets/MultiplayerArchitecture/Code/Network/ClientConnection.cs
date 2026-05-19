@@ -1,8 +1,11 @@
+using Assets.MultiplayerArchitecture.Code.Entities;
 using Assets.MultiplayerArchitecture.Code.Network;
 using ImageCampus.ToolBox.Dataflow;
+using ImageCampus.ToolBox.Services;
 using KapNet;
 using KapNet.src;
 using MultiplayerArchitecture;
+using MultiplayerArchitecture.Entities;
 using System;
 using System.Net;
 
@@ -11,6 +14,8 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
     private IClient client;
 
     private DateTime lastServerResponce;
+
+    private NetworkRegistry NetworkRegistry => ServiceProvider.Instance.GetService<NetworkRegistry>();
 
     public double Ping { get; private set; }
 
@@ -33,7 +38,10 @@ public class ClientConnection : NetworkPeer<uint>, IInitable, ITickable, IDispos
 
     private void HandleClientJoin(NetworkPacket networkPacket)
     {
-
+        foreach (Entity entity in NetworkRegistry.AllOfType<Entity>())
+            Send(PacketType.Spawn, PacketMetaData.Reliable, entity.ownerNetworkID,
+                entity.coordinate.x, entity.coordinate.y, entity.coordinate.z,
+                entity.GetType().Name);
     }
 
     private void HandlePosition(NetworkPacket networkPacket)

@@ -52,7 +52,6 @@ namespace Multiplayer.Arch
         public void Dispose()
         {
             currentScene.Dispose();
-            GameClient.Dispose();
         }
     }
 }
